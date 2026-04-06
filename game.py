@@ -1,4 +1,5 @@
-import pygame, sys
+import pygame
+import sys
 from settings import *
 from entities.player import Player
 
@@ -12,21 +13,32 @@ class Game:
 
     def start_level(self):
         player = Player(100, SCREEN_HEIGHT - 150)
-        platforms = [pygame.Rect(0, SCREEN_HEIGHT-50, SCREEN_WIDTH, 50)]
+        platforms = [pygame.Rect(0, SCREEN_HEIGHT - 50, SCREEN_WIDTH, 50)]
         all_sprites = pygame.sprite.Group(player)
 
         running = True
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit(); sys.exit()
+                    pygame.quit()
+                    sys.exit()
+
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_LEFT: player.move_left()
-                    if event.key == pygame.K_RIGHT: player.move_right()
-                    if event.key == pygame.K_SPACE: player.jump()
-                    if event.key == pygame.K_ESCAPE: running = False
+                    if event.key == pygame.K_a or event.key == pygame.K_LEFT:
+                        player.move_left()
+                    if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                        player.move_right()
+                    if event.key == pygame.K_SPACE:
+                        player.jump()
+                    if event.key == pygame.K_ESCAPE:
+                        running = False
+
                 if event.type == pygame.KEYUP:
-                    if event.key in (pygame.K_LEFT, pygame.K_RIGHT): player.stop()
+                    keys = pygame.key.get_pressed()
+                    moving_left = keys[pygame.K_a] or keys[pygame.K_LEFT]
+                    moving_right = keys[pygame.K_d] or keys[pygame.K_RIGHT]
+                    if not moving_left and not moving_right:
+                        player.stop()
 
             player.update(platforms)
 
@@ -35,7 +47,7 @@ class Game:
                 pygame.draw.rect(self.screen, COLORS['GREEN'], p)
             all_sprites.draw(self.screen)
 
-            self.screen.blit(self.font.render("Уровень 1", True, COLORS['WHITE']), (10,10))
+            self.screen.blit(self.font.render("Уровень 1", True, COLORS['WHITE']), (10, 10))
             pygame.display.flip()
             self.clock.tick(FPS)
 

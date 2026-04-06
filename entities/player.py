@@ -1,5 +1,8 @@
 import pygame
-from settings import COLORS, SPRITE_SIZE, SPRITE_SCALE, SPRITES_PATH, PLAYER_SPRITESHEET
+from settings import (
+    COLORS, SPRITE_WIDTH, SPRITE_HEIGHT, SPRITE_SCALE,
+    SPRITES_PATH, PLAYER_SPRITESHEET
+)
 
 try:
     from core.sprite_sheet import SpriteSheet
@@ -7,55 +10,60 @@ except ImportError:
     class SpriteSheet:
         def __init__(self, *args, **kwargs): pass
 
-        def get_animation(self, *args, **kwargs): return []
-
         def get_frames(self, *args, **kwargs): return []
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, x, y, use_spritesheet=True):
+    def __init__(self, x, y):
         super().__init__()
 
-        self.use_spritesheet = use_spritesheet
         self.facing_right = True
         self.current_frame = 0
         self.animation_timer = 0
         self.animation_speed = 8
-        self.state = 'idle'
 
-        # Сначала создаем fallback-спрайты (на всякий случай)
-        self._generate_fallback_sprites()
+        self.walk_right_frames = []
+        self.walk_left_frames = []
+        self.idle_right_frames = []
+        self.idle_left_frames = []
 
-        if use_spritesheet:
-            try:
-                import os
-                sprite_path = os.path.join(SPRITES_PATH, PLAYER_SPRITESHEET)
-                sheet = SpriteSheet(sprite_path, SPRITE_SIZE, SPRITE_SIZE, SPRITE_SCALE)
+        try:
+            sprite_path = f"{SPRITES_PATH}/{PLAYER_SPRITESHEET}"
+            sheet = SpriteSheet(sprite_path, SPRITE_WIDTH, SPRITE_HEIGHT, SPRITE_SCALE)
 
-                idle_frames = sheet.get_animation(0, 4)
-                if idle_frames:
-                    self.idle_frames = idle_frames
+            ROW_WALK_RIGHT = 11
+            ROW_WALK_LEFT = 9
+            WALK_FRAMES = 6
 
-                run_frames = sheet.get_animation(1, 6)
-                if run_frames:
-                    self.run_frames = run_frames
+            self.walk_right_frames = sheet.get_row_frames(ROW_WALK_RIGHT, WALK_FRAMES)
+            self.walk_left_frames = sheet.get_row_frames(ROW_WALK_LEFT, WALK_FRAMES)
 
-                jump_frames = sheet.get_animation(2, 2)
-                if jump_frames:
-                    self.jump_frames = jump_frames
+            self.idle_right_frames = [self.walk_right_frames[0]] if self.walk_right_frames else []
+            self.idle_left_frames = [self.walk_left_frames[0]] if self.walk_left_frames else []
 
-                attack_frames = sheet.get_animation(3, 4)
-                if attack_frames:
-                    self.attack_frames = attack_frames
+            print(f"Загружено кадров ходьбы ВПРАВО: {len(self.walk_right_frames)}")
+            print(f"Загружено кадров ходьбы ВЛЕВО: {len(self.walk_left_frames)}")
 
-                print("Спрайт-лист успешно загружен!")
-            except Exception as e:
-                print(f"Не удалось загрузить спрайт-лист: {e}, используем fallback-спрайты")
+            if self.walk_right_frames:
+                frame_size = self.walk_right_frames[0].get_size()
+                print(f"Размер кадра: {frame_size[0]}x{frame_size[1]} пикселей")
+                self.image = self.walk_right_frames[0]
+            else:
+                self.image = self._make_fallback()
 
-        self.image = self.idle_frames[0]
+        except Exception as e:
+            print(f"Ошибка загрузки спрайтов: {e}")
+            self.image = self._make_fallback()
+            self.walk_left_frames = [self.image]
+            self.walk_right_frames = [self.image]
+            self.idle_left_frames = [self.image]
+            self.idle_right_frames = [self.image]
+
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+        self.rect.width = SPRITE_WIDTH * SPRITE_SCALE
+        self.rect.height = SPRITE_HEIGHT * SPRITE_SCALE
 
         self.vel_x = 0
         self.vel_y = 0
@@ -63,34 +71,18 @@ class Player(pygame.sprite.Sprite):
         self.speed = 5
         self.jump_power = -12
         self.gravity = 0.8
-
         self.health = 5
-        self.attack_timer = 0
-        self.invincible_timer = 0
 
-    def _generate_fallback_sprites(self):
-        self.idle_frames = []
-        self.run_frames = []
-        self.jump_frames = []
-        self.attack_frames = []
-
-        for i in range(4):
-            surf = pygame.Surface((45, 55), pygame.SRCALPHA)
-            pygame.draw.rect(surf, COLORS['BLACK'], (10, 15, 25, 35))
-            pygame.draw.ellipse(surf, (200, 180, 150), (12, 5, 21, 20))
-            pygame.draw.rect(surf, COLORS['CYAN'], (14, 12, 8, 6), 2)
-            pygame.draw.rect(surf, COLORS['CYAN'], (24, 12, 8, 6), 2)
-            pygame.draw.rect(surf, COLORS['GRAY'], (28, 25, 12, 18))
-            pygame.draw.rect(surf, COLORS['BLUE'], (30, 27, 8, 14))
-            pygame.draw.ellipse(surf, COLORS['BLACK'], (12, 2, 22, 10))
-            self.idle_frames.append(surf)
-
-        self.run_frames = self.idle_frames[:]
-        self.jump_frames = [self.idle_frames[0], self.idle_frames[0]]
-        self.attack_frames = self.idle_frames[:]
+    def _make_fallback(self):
+        size = (SPRITE_WIDTH * SPRITE_SCALE, SPRITE_HEIGHT * SPRITE_SCALE)
+        surf = pygame.Surface(size)
+        surf.fill(COLORS['BLACK'])
+        pygame.draw.circle(surf, COLORS['WHITE'], (size[0] // 3, size[1] // 3), 5)
+        pygame.draw.circle(surf, COLORS['WHITE'], (size[0] * 2 // 3, size[1] // 3), 5)
+        pygame.draw.rect(surf, COLORS['BLUE'], (size[0] // 2 - 5, size[1] // 2, 10, 15))
+        return surf
 
     def update(self, platforms):
-
         self.vel_y += self.gravity
         self.rect.x += self.vel_x
         self.rect.y += self.vel_y
@@ -102,15 +94,18 @@ class Player(pygame.sprite.Sprite):
                 self.vel_y = 0
                 self.on_ground = True
 
-        if self.rect.left < 0: self.rect.left = 0
-        if self.rect.right > 1200: self.rect.right = 1200
+        if self.rect.left < 0:
+            self.rect.left = 0
+        if self.rect.right > 1200:
+            self.rect.right = 1200
+        if self.rect.top < 0:
+            self.rect.top = 0
+        if self.rect.bottom > 700:
+            self.rect.bottom = 700
+            self.vel_y = 0
+            self.on_ground = True
 
         self._update_animation()
-
-        if self.attack_timer > 0:
-            self.attack_timer -= 1
-        if self.invincible_timer > 0:
-            self.invincible_timer -= 1
 
     def _update_animation(self):
         self.animation_timer += 1
@@ -122,18 +117,17 @@ class Player(pygame.sprite.Sprite):
                 self.current_frame = (self.current_frame + 1) % len(frames)
                 self.image = frames[self.current_frame]
 
-        if not self.facing_right:
-            self.image = pygame.transform.flip(self.image, True, False)
-
     def _get_current_frames(self):
-        if self.attack_timer > 0:
-            return self.attack_frames
-        elif not self.on_ground:
-            return self.jump_frames
-        elif abs(self.vel_x) > 0.5:
-            return self.run_frames
+        if abs(self.vel_x) > 0.5:
+            if self.facing_right:
+                return self.walk_right_frames if self.walk_right_frames else [self.image]
+            else:
+                return self.walk_left_frames if self.walk_left_frames else [self.image]
         else:
-            return self.idle_frames
+            if self.facing_right:
+                return self.idle_right_frames
+            else:
+                return self.idle_left_frames
 
     def move_left(self):
         self.vel_x = -self.speed
@@ -149,20 +143,4 @@ class Player(pygame.sprite.Sprite):
     def jump(self):
         if self.on_ground:
             self.vel_y = self.jump_power
-
-    def attack(self):
-        if self.attack_timer == 0:
-            self.attack_timer = 20
-            self.current_frame = 0
-            return True
-        return False
-
-    def take_damage(self, amount=1):
-        if self.invincible_timer == 0:
-            self.health -= amount
-            self.invincible_timer = 30
-            return True
-        return False
-
-    def draw(self, screen, camera_x=0):
-        screen.blit(self.image, (self.rect.x - camera_x, self.rect.y))
+            self.on_ground = False

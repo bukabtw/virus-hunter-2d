@@ -25,16 +25,18 @@ SOUNDS_PATH = os.path.join(ASSETS_PATH, 'sounds')
 os.makedirs(SPRITES_PATH, exist_ok=True)
 os.makedirs(SOUNDS_PATH, exist_ok=True)
 
-
 PLAYER_SPRITESHEET = 'player.png'
-SPRITE_SIZE = 64
-SPRITE_SCALE = 1
+SPRITE_WIDTH = 64
+SPRITE_HEIGHT = 64
+SPRITE_SCALE = 2
 
 SPRITE_ROWS = {
-    'idle': (0, 4),
-    'run': (1, 6),
-    'jump': (2, 2),
-    'attack': (3, 4),
+    'walk_left': (6, 13),
+    'walk_right': (11, 10),
+    'idle_left': (6, 2),
+    'idle_right': (4, 2),
+    'jump': (4, 2),
+    'attack': (6, 4),
 }
 
 PLAYER_SPEED = 5

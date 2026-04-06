@@ -9,20 +9,25 @@ class SpriteSheet:
 
         try:
             self.sheet = pygame.image.load(filename).convert_alpha()
-        except:
-            print(f"Предупреждение: не удалось загрузить {filename}, использую fallback-спрайты")
+            print(f"Загружен спрайт-лист: {self.sheet.get_width()}x{self.sheet.get_height()}")
+        except Exception as e:
+            print(f"Ошибка загрузки {filename}: {e}")
             self.sheet = pygame.Surface((frame_width * 4, frame_height * 4))
             self.sheet.fill((50, 50, 50))
 
         self.frames = []
         self._extract_frames()
+        print(f"Всего кадров: {len(self.frames)}")
 
     def _extract_frames(self):
         sheet_width = self.sheet.get_width()
         sheet_height = self.sheet.get_height()
 
-        cols = max(1, sheet_width // self.frame_width)
-        rows = max(1, sheet_height // self.frame_height)
+        cols = sheet_width // self.frame_width
+        rows = sheet_height // self.frame_height
+
+        print(f"Строк: {rows}, Столбцов: {cols}")
+        print(f"Ожидаемый размер кадра: {self.frame_width}x{self.frame_height}")
 
         for row in range(rows):
             for col in range(cols):
@@ -32,27 +37,34 @@ class SpriteSheet:
                 if x + self.frame_width <= sheet_width and y + self.frame_height <= sheet_height:
                     frame = self.sheet.subsurface(pygame.Rect(x, y, self.frame_width, self.frame_height))
 
+                    frame = frame.copy()
+
                     if self.scale != 1:
                         new_size = (self.frame_width * self.scale, self.frame_height * self.scale)
                         frame = pygame.transform.scale(frame, new_size)
 
                     self.frames.append(frame)
 
-    def get_frames(self, start, count, flip=False):
+        print(f"Успешно нарезано {len(self.frames)} кадров")
+
+    def get_frames(self, start, count):
         if start >= len(self.frames):
+            print(f"Ошибка: start={start} превышает количество кадров={len(self.frames)}")
             return []
 
         end = min(start + count, len(self.frames))
-        frames = self.frames[start:end]
+        result = self.frames[start:end]
 
-        while len(frames) < count and frames:
-            frames.append(frames[-1])
+        while len(result) < count and result:
+            result.append(result[-1])
 
-        if flip:
-            frames = [pygame.transform.flip(f, True, False) for f in frames]
+        return result
 
-        return frames
+    def get_row_frames(self, row, count=None):
+        cols = self.sheet.get_width() // self.frame_width
+        start = row * cols
 
-    def get_animation(self, row, cols_per_row, flip=False):
-        start = row * cols_per_row
-        return self.get_frames(start, cols_per_row, flip)
+        if count is None:
+            count = cols
+
+        return self.get_frames(start, count)
