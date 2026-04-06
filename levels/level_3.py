@@ -1,0 +1,106 @@
+import pygame
+from settings import SCREEN_WIDTH, SCREEN_HEIGHT, MAP_WIDTH, MAP_HEIGHT
+
+def get_level_3():
+    platforms = [
+        pygame.Rect(0, 650, 200, 50),
+        pygame.Rect(250, 600, 150, 50),
+        pygame.Rect(450, 550, 150, 50),
+        pygame.Rect(650, 500, 150, 50),
+        pygame.Rect(850, 450, 150, 50),
+        pygame.Rect(1050, 400, 150, 50),
+        pygame.Rect(1250, 350, 150, 50),
+        pygame.Rect(1450, 300, 150, 50),
+        pygame.Rect(1650, 250, 150, 50),
+        pygame.Rect(1850, 200, 150, 50),
+        pygame.Rect(2050, 150, 150, 50),
+        pygame.Rect(2250, 100, 150, 50),
+        pygame.Rect(2400, 150, 150, 50),
+        pygame.Rect(2600, 200, 150, 50),
+        pygame.Rect(2800, 250, 150, 50),
+        pygame.Rect(3000, 300, 150, 50),
+        pygame.Rect(3200, 350, 150, 50),
+        pygame.Rect(3400, 400, 150, 50),
+        pygame.Rect(3600, 450, 150, 50),
+        pygame.Rect(3800, 500, 150, 50),
+        pygame.Rect(4000, 550, 150, 50),
+        pygame.Rect(4200, 600, 200, 50),
+        pygame.Rect(100, 400, 100, 30),
+        pygame.Rect(300, 350, 100, 30),
+        pygame.Rect(500, 300, 100, 30),
+        pygame.Rect(700, 250, 100, 30),
+        pygame.Rect(900, 200, 100, 30),
+        pygame.Rect(1100, 150, 100, 30),
+        pygame.Rect(1300, 100, 100, 30),
+        pygame.Rect(1500, 150, 100, 30),
+        pygame.Rect(1700, 200, 100, 30),
+        pygame.Rect(1900, 250, 100, 30),
+        pygame.Rect(2100, 300, 100, 30),
+        pygame.Rect(2300, 350, 100, 30),
+        pygame.Rect(2500, 400, 100, 30),
+        pygame.Rect(2700, 450, 100, 30),
+        pygame.Rect(2900, 500, 100, 30),
+        pygame.Rect(3100, 550, 100, 30),
+        pygame.Rect(3300, 600, 100, 30),
+        pygame.Rect(3500, 600, 100, 30),
+        pygame.Rect(3700, 600, 100, 30),
+        pygame.Rect(3900, 600, 100, 30),
+    ]
+    
+    enemies = [
+        (150, 550),
+        (400, 500),
+        (600, 450),
+        (800, 400),
+        (1000, 350),
+        (1200, 300),
+        (1400, 250),
+        (1600, 200),
+        (1800, 150),
+        (2000, 100),
+        (2200, 150),
+        (2400, 200),
+        (2600, 250),
+        (2800, 300),
+        (3000, 350),
+        (3200, 400),
+        (3400, 450),
+        (3600, 500),
+        (3800, 550),
+        (4000, 600),
+    ]
+    
+    items = [
+        (200, 550),
+        (500, 500),
+        (700, 450),
+        (900, 400),
+        (1100, 350),
+        (1300, 300),
+        (1500, 250),
+        (1700, 200),
+        (1900, 150),
+        (2100, 100),
+        (2300, 150),
+        (2500, 200),
+        (2700, 250),
+        (2900, 300),
+        (3100, 350),
+        (3300, 400),
+        (3500, 450),
+        (3700, 500),
+        (3900, 550),
+        (4100, 600),
+    ]
+    
+    exit_rect = None
+    
+    boss = (4300, 650)
+    
+    return {
+        'platforms': platforms,
+        'enemies': enemies,
+        'items': items,
+        'exit': exit_rect,
+        'boss': boss
+    }
