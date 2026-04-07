@@ -1,5 +1,6 @@
 import pygame
 import os
+import random
 from settings import SCREEN_WIDTH, SCREEN_HEIGHT, MAP_WIDTH, MAP_HEIGHT
 from entities.platform import Platform
 
@@ -16,11 +17,12 @@ class LevelLoader:
         from levels.level_1 import get_level_1
         platforms_1, items_1, enemies_1, exit_pos_1 = get_level_1()
         platform_list = []
+        random.seed(42)
         for p in platforms_1:
-            if p.width == 1200:
-                platform_list.append(Platform(p.x, p.y, p.width, p.height, 'hdd'))
-            else:
-                platform_list.append(Platform(p.x, p.y, p.width, p.height, 'ram'))
+            platform_type = 'ram' if random.random() < 0.5 else 'hdd'
+            new_width = p.width * 3   # например, растянуть в 3 раза
+            new_height = p.height * 3  # растянуть в 2 раза по высоте
+            platform_list.append(Platform(p.x, p.y, new_width, new_height, platform_type))
         self.levels[1] = {
             'platforms': platform_list,
             'items': items_1,

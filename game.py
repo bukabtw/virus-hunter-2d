@@ -146,7 +146,10 @@ class Game:
             camera.update(player)
             self.screen.fill(COLORS['DARK_GREEN'])
             for p in platforms:
-                pygame.draw.rect(self.screen, COLORS['GREEN'], camera.apply_rect(p))
+                if hasattr(p, 'image') and p.image:
+                    self.screen.blit(p.image, camera.apply(p))
+                else:
+                    pygame.draw.rect(self.screen, COLORS['GREEN'], camera.apply_rect(p))
             for sprite in all_sprites:
                 self.screen.blit(sprite.image, camera.apply(sprite))
             if level_data['exit']:
