@@ -7,6 +7,7 @@ from entities.item import Item
 from entities.projectile import Projectile
 from levels.level_loader import LevelLoader
 from core.camera import Camera
+
 class Game:
     def __init__(self):
         pygame.init()
@@ -14,8 +15,38 @@ class Game:
         pygame.display.set_caption("Virus Hunter")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font(None, 36)
-
+        self.level_sounds = {}
+        self.load_level_sounds()
+    
+    def load_level_sounds(self):
+        for i in range(1, 4):
+            sound_path = os.path.join(SOUNDS_PATH, f"level_{i}.wav")
+            if os.path.exists(sound_path):
+                try:
+                    self.level_sounds[i] = pygame.mixer.Sound(sound_path)
+                    print(f"Загружен саундтрек для уровня {i}")
+                except pygame.error as e:
+                    print(f"Ошибка загрузки саундтрека уровня {i}: {e}")
+            else:
+                print(f"Файл саундтрека уровня {i} не найден: {sound_path}")
+                try:
+                    from pygame.sndarray import array as sound_array
+                    silent_samples = sound_array(array([[[0, 0]] * 22050], dtype='int16'))
+                    self.level_sounds[i] = pygame.sndarray.make_sound(silent_samples)
+                except:
+                    pass
+    
     def start_level(self, level_num=1, difficulty=1):
+        if hasattr(self, 'menu_sound') and self.menu_sound:
+            self.menu_sound.stop()
+        
+        for sound in self.level_sounds.values():
+            sound.stop()
+        
+        if level_num in self.level_sounds:
+            self.level_sounds[level_num].play(-1)
+            print(f"Запущен саундтрек уровня {level_num}")
+
         level_loader = LevelLoader()
         level_data = level_loader.get_level(level_num)
         player = Player(100, SCREEN_HEIGHT - 150)
@@ -79,13 +110,9 @@ class Game:
             health_bar_height = 20
             health_ratio = player.health / 5
             health_bar_fill = health_bar_width * health_ratio
-            # Фон полоски здоровья
             pygame.draw.rect(self.screen, COLORS['RED'], (10, 130, health_bar_width, health_bar_height))
-            # Заполнение полоски здоровья
             pygame.draw.rect(self.screen, COLORS['GREEN'], (10, 130, health_bar_fill, health_bar_height))
-            # Рамка
             pygame.draw.rect(self.screen, COLORS['WHITE'], (10, 130, health_bar_width, health_bar_height), 2)
-            # Текст
             health_text = self.font.render(f"Здоровье", True, COLORS['WHITE'])
             self.screen.blit(health_text, (10, 105))
             for proj in projectiles:
@@ -128,14 +155,15 @@ class Game:
             total_items = level_loader.get_total_items(level_num)
             self.screen.blit(self.font.render(f"Уровень {level_num}", True, COLORS['WHITE']), (10, 10))
             self.screen.blit(self.font.render(f"Компьютеры: {len(player.collected_items)}/{total_items}", True, COLORS['WHITE']), (10, 50))
-
-
             self.screen.blit(self.font.render(f"Здоровье: {player.health}", True, COLORS['WHITE']), (10, 90))
             pygame.display.flip()
             clock.tick(FPS)
+        if level_num in self.level_sounds:
+            self.level_sounds[level_num].stop()
         self.__init__()
         from ui.menu import Menu
         Menu(self).run()
+    
     def show_victory_screen(self):
         self.screen.fill(COLORS['BLACK'])
         title = self.font.render("ПОБЕДА!", True, COLORS['GREEN'])
@@ -145,6 +173,7 @@ class Game:
         pygame.display.flip()
         pygame.time.delay(3000)
         self.run()
+    
     def show_game_over_screen(self):
         self.screen.fill(COLORS['BLACK'])
         title = self.font.render("ИГРА ОКОНЧЕНА", True, COLORS['RED'])
@@ -161,6 +190,7 @@ class Game:
                 if event.type == pygame.KEYDOWN:
                     waiting = False
         self.run()
+    
     def run(self):
         from ui.menu import Menu
         Menu(self).run()

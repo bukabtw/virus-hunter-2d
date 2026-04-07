@@ -37,6 +37,7 @@ class Menu:
         self.load_soundtrack()
         self.background_image = None
         self.load_background()
+        self.menu_sound = None
 
     def load_soundtrack(self):
         soundtrack_path = os.path.join(SOUNDS_PATH, 'menu_soundtrack.wav')
@@ -122,6 +123,8 @@ class Menu:
         self._create_buttons()
 
     def start(self):
+        if self.soundtrack:
+            self.soundtrack.stop()
         self.running = False
         self.game.start_level(difficulty=self.difficulty)
 

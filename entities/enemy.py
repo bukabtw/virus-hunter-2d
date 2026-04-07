@@ -35,7 +35,7 @@ class Enemy(pygame.sprite.Sprite):
             sprite_path = f"{SPRITES_PATH}/{ENEMY_SPRITESHEET}"
             sheet = SpriteSheet(sprite_path, SPRITE_WIDTH, SPRITE_HEIGHT, SPRITE_SCALE)
 
-            # Загрузка всех анимаций
+
             self.idle_frames = sheet.get_row_frames(ENEMY_ANIMATIONS['idle'][0], ENEMY_ANIMATIONS['idle'][1])
             self.walk_right_frames = sheet.get_row_frames(ENEMY_ANIMATIONS['walk_right'][0], ENEMY_ANIMATIONS['walk_right'][1])
             self.walk_left_frames = sheet.get_row_frames(ENEMY_ANIMATIONS['walk_left'][0], ENEMY_ANIMATIONS['walk_left'][1])
