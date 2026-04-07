@@ -56,7 +56,6 @@ class Menu:
             try:
                 loaded_image = pygame.image.load(bg_path).convert()
                 self.background_image = pygame.transform.scale(loaded_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
-                print("Фоновое изображение меню загружено и масштабировано.")
             except Exception as e:
                 print(f"Ошибка загрузки фона меню: {e}")
         else:
@@ -95,7 +94,7 @@ class Menu:
                         option_rect = pygame.Rect(SCREEN_WIDTH//2 - 140, y, 280, 50)
                         if option_rect.collidepoint(mouse_pos):
                             if i == 0:
-                                print("Изменение размера экрана")
+                                 print("Изменение размера экрана")
                             elif i == 1:
                                 self.difficulty = (self.difficulty % 3) + 1
                                 options[i] = f"СЛОЖНОСТЬ: {DIFFICULTY[self.difficulty]['name'].upper()}"

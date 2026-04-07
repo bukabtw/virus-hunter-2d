@@ -1,7 +1,7 @@
 import pygame
 from settings import (
     COLORS, SPRITE_WIDTH, SPRITE_HEIGHT, SPRITE_SCALE,
-    SPRITES_PATH, BOSS_SPRITESHEET, BOSS_ANIMATIONS, SCREEN_WIDTH
+    SPRITES_PATH, BOSS_SPRITESHEET, BOSS_ANIMATIONS, SCREEN_WIDTH, MAP_WIDTH
 )
 from .enemy import Enemy
 
@@ -10,12 +10,11 @@ try:
 except ImportError:
     class SpriteSheet:
         def __init__(self, *args, **kwargs): pass
-
-        def get_frames(self, *args, **kwargs): return []
+        def get_row_frames(self, *args, **kwargs): return []
 
 
 class Boss(pygame.sprite.Sprite):
-    def __init__(self, x, y, spawn_interval=2000):
+    def __init__(self, x, y, spawn_interval=3000):
         super().__init__()
 
         self.facing_right = True
@@ -42,84 +41,87 @@ class Boss(pygame.sprite.Sprite):
             self.attack_left_frames = sheet.get_row_frames(BOSS_ANIMATIONS['attack_left'][0], BOSS_ANIMATIONS['attack_left'][1])
             self.attack_right_frames = sheet.get_row_frames(BOSS_ANIMATIONS['attack_right'][0], BOSS_ANIMATIONS['attack_right'][1])
 
-            print(f"Boss: Загружено кадров idle: {len(self.idle_frames)}, look: {len(self.look_left_frames)}, attack: {len(self.attack_left_frames)}")
-
             if self.idle_frames:
                 self.image = self.idle_frames[0]
             else:
                 self.image = self._make_fallback()
         except Exception as e:
-            print(f"Ошибка загрузки спрайтов босса: {e}")
             self.image = self._make_fallback()
 
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-        self.speed = 2
+        self.speed = 1.5
         self.direction = 1
+        
         self.spawn_timer = 0
         self.spawn_interval = spawn_interval
-        self.is_attacking = False
         self.attack_timer = 0
-        self.attack_duration = 1000
+        self.attack_delay = 60
+        self.attack_cooldown = 0
+        
+        self.knockback_timer = 0
+        self.knockback_direction = 0
 
     def _make_fallback(self):
-        size = (SPRITE_WIDTH * SPRITE_SCALE * 4, SPRITE_HEIGHT * SPRITE_SCALE * 4)
+        size = (SPRITE_WIDTH * SPRITE_SCALE * 3, SPRITE_HEIGHT * SPRITE_SCALE * 3)
         surf = pygame.Surface(size)
         surf.fill(COLORS['PURPLE'])
         return surf
 
-    def update(self, platforms, current_time, enemies_group, all_sprites_group):
-        player_centerx = 600
-        if self.rect.centerx > player_centerx:
-            self.facing_right = False
-            self.state = 'attack_left' if self.is_attacking else 'look_left'
+    def update(self, platforms, current_time, enemies_group, all_sprites_group, player):
+        if self.knockback_timer > 0:
+            self.knockback_timer -= 1
+            self.rect.x += self.knockback_direction * 5
+            return
+        
+        if self.attack_cooldown > 0:
+            self.attack_cooldown -= 1
+        
+        if player and player.alive():
+            if self.rect.x < player.rect.x:
+                self.direction = 1
+                self.facing_right = True
+            elif self.rect.x > player.rect.x:
+                self.direction = -1
+                self.facing_right = False
+            
+            self.rect.x += self.speed * self.direction
+        
+        if player and self.rect.colliderect(player.rect) and self.attack_cooldown == 0:
+            self.attack_cooldown = self.attack_delay
+            player.take_damage(2)
+
+            self.knockback_timer = 10
+            self.knockback_direction = -self.direction
+        
+        if current_time - self.spawn_timer > self.spawn_interval:
+            self.spawn_timer = current_time
+            offset = -50 if self.direction > 0 else 50
+            virus = Enemy(
+                self.rect.centerx + offset, 
+                self.rect.bottom - 20, 
+                speed=2.0
+            )
+            enemies_group.add(virus)
+            all_sprites_group.add(virus)
+        
+        if self.attack_cooldown > 0:
+            self.state = 'attack_left' if not self.facing_right else 'attack_right'
         else:
-            self.facing_right = True
-            self.state = 'attack_right' if self.is_attacking else 'look_right'
-
-        if self.is_attacking:
-            if current_time - self.attack_timer > self.attack_duration:
-                self.is_attacking = False
-        else:
-            if current_time - self.spawn_timer > self.spawn_interval:
-                self.spawn_timer = current_time
-                virus = Enemy(self.rect.centerx, self.rect.bottom, speed=2.5)
-                enemies_group.add(virus)
-                all_sprites_group.add(virus)
-            if current_time % 5000 < 10:
-                self.is_attacking = True
-                self.attack_timer = current_time
-
-        self.rect.x += self.speed * self.direction
-
-        on_platform = False
-        for p in platforms:
-            if abs(self.rect.bottom - p.rect.top) < 10 and p.rect.left <= self.rect.centerx <= p.rect.right:
-                on_platform = True
-                if self.rect.right >= p.rect.right:
-                    self.direction = -1
-                elif self.rect.left <= p.rect.left:
-                    self.direction = 1
-                break
-
-        if not on_platform:
-            self.direction *= -1
-
-        if self.rect.right > SCREEN_WIDTH:
-            self.rect.right = SCREEN_WIDTH
-            self.direction = -1
+            self.state = 'look_left' if not self.facing_right else 'look_right'
+        
         if self.rect.left < 0:
             self.rect.left = 0
-            self.direction = 1
-
+        if self.rect.right > MAP_WIDTH:
+            self.rect.right = MAP_WIDTH
+        
         self._update_animation()
 
     def _update_animation(self):
         self.animation_timer += 1
         if self.animation_timer >= self.animation_speed:
             self.animation_timer = 0
-
             frames = self._get_current_frames()
             if frames:
                 self.current_frame = (self.current_frame + 1) % len(frames)
@@ -138,8 +140,10 @@ class Boss(pygame.sprite.Sprite):
             return self.attack_right_frames if self.attack_right_frames else [self.image]
         return [self.image]
 
-
     def take_damage(self, amount):
         self.health -= amount
         if self.health <= 0:
             self.kill()
+        else:
+            self.knockback_timer = 8
+            self.knockback_direction = -self.direction

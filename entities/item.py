@@ -31,14 +31,11 @@ class Item(pygame.sprite.Sprite):
 
             self.idle_frames = sheet.get_row_frames(ITEM_ANIMATIONS['idle'][0], ITEM_ANIMATIONS['idle'][1])
 
-            print(f"Item: Загружено кадров idle: {len(self.idle_frames)}")
-
             if self.idle_frames:
                 self.image = self.idle_frames[0]
             else:
                 self.image = self._make_fallback()
         except Exception as e:
-            print(f"Ошибка загрузки спрайтов предмета: {e}")
             self.image = self._make_fallback()
 
         self.rect = self.image.get_rect()

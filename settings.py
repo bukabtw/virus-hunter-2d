@@ -4,8 +4,8 @@ SCREEN_WIDTH = 1200
 SCREEN_HEIGHT = 700
 FPS = 60
 
-MAP_WIDTH = 5000
-MAP_HEIGHT = 1400
+MAP_WIDTH = 8000
+MAP_HEIGHT = 5000
 
 COLORS = {
     'BLACK': (0,0,0),
@@ -83,6 +83,31 @@ SPRITE_ROWS = {
     'jump': (4, 2),
     'attack': (6, 4),
 }
+
+TILE_CONFIG = {
+    1: {
+        'default_type': 'ram',
+        'tile_scale': (2, 2),
+        'platform_height': 32,
+        'platform_style': 'green',
+    },
+    2: {
+        'default_type': 'hdd',
+        'tile_scale': (2, 2),
+        'platform_height': 36,
+        'platform_style': 'metal',
+    },
+    3: {
+        'default_type': 'avast',
+        'tile_scale': (1, 1),
+        'platform_height': 40,
+        'platform_style': 'dark',
+    },
+}
+
+RAM_TILE_SIZE = (52, 15)
+HDD_TILE_SIZE = (47, 36)
+AVAST_TILE_SIZE = (64, 64)
 
 PLAYER_SPEED = 5
 PLAYER_JUMP_POWER = -12

@@ -3,32 +3,43 @@ import os
 from settings import *
 
 class Platform(pygame.sprite.Sprite):
-    def __init__(self, x, y, width, height, platform_type='hdd'):
+    def __init__(self, x, y, width, height, platform_type='hdd', tile_scale=(1, 1)):
         super().__init__()
         self.platform_type = platform_type
         self.width = width
         self.height = height
-        self.image = pygame.Surface((width, height), pygame.SRCALPHA)
+        
+        self.image = pygame.Surface((width, height))
+        self.image.fill(COLORS['BLACK'])
         self.rect = pygame.Rect(x, y, width, height)
 
         try:
             if platform_type == 'hdd':
                 sprite_path = os.path.join(SPRITES_PATH, 'hdd.png')
+                orig_w, orig_h = HDD_TILE_SIZE
             elif platform_type == 'ram':
                 sprite_path = os.path.join(SPRITES_PATH, 'ram.png')
+                orig_w, orig_h = RAM_TILE_SIZE
+            elif platform_type == 'avast':
+                sprite_path = os.path.join(SPRITES_PATH, 'avast.png')
+                orig_w, orig_h = AVAST_TILE_SIZE
             else:
                 sprite_path = None
 
-            if sprite_path:
-                tile_image = pygame.image.load(sprite_path).convert_alpha()
-                tile_width = tile_image.get_width()
-                tile_height = tile_image.get_height()
-                if width != tile_width or height != tile_height:
-                    tile_image = pygame.transform.scale(tile_image, (width, height))
-                self.image.blit(tile_image, (0, 0))
+            if sprite_path and os.path.exists(sprite_path):
+                tile = pygame.image.load(sprite_path).convert_alpha()
+                
+                scale_w, scale_h = tile_scale
+                new_w = orig_w * scale_w
+                new_h = orig_h * scale_h
+                tile = pygame.transform.scale(tile, (new_w, new_h))
+                
+                tile_w, tile_h = new_w, new_h
+                
+                for px in range(0, width, tile_w):
+                    for py in range(0, height, tile_h):
+                        self.image.blit(tile, (px, py))
             else:
-                # Заглушка
-                self.image.fill(COLORS['GRAY'])
+                pygame.draw.rect(self.image, COLORS['GREEN'], (0, 0, width, height), 2)
         except Exception as e:
-            print(f"Ошибка загрузки спрайта платформы: {e}")
-            self.image.fill(COLORS['GRAY'])
+            pygame.draw.rect(self.image, COLORS['RED'], (0, 0, width, height), 2)

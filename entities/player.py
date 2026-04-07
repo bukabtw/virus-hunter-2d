@@ -13,6 +13,7 @@ except ImportError:
         def __init__(self, *args, **kwargs): pass
 
         def get_frames(self, *args, **kwargs): return []
+        
 
 
 class Player(pygame.sprite.Sprite):
@@ -23,6 +24,8 @@ class Player(pygame.sprite.Sprite):
         self.current_frame = 0
         self.animation_timer = 0
         self.animation_speed = 8
+        self.camera_x = 0
+        self.camera_y = 0
 
         self.idle_right_frames = []
         self.idle_left_frames = []
@@ -50,14 +53,11 @@ class Player(pygame.sprite.Sprite):
             self.attack_right_frames = sheet.get_row_frames(PLAYER_ANIMATIONS['attack_right'][0], PLAYER_ANIMATIONS['attack_right'][1])
             self.attack_left_frames = sheet.get_row_frames(PLAYER_ANIMATIONS['attack_left'][0], PLAYER_ANIMATIONS['attack_left'][1])
 
-            print(f"Player: Загружено кадров idle_right: {len(self.idle_right_frames)}, walk: {len(self.walk_right_frames)}, attack: {len(self.attack_right_frames)}, jump_right: {len(self.jump_right_frames)}, jump_left: {len(self.jump_left_frames)}")
-
             if self.idle_right_frames:
                 self.image = self.idle_right_frames[0]
             else:
                 self.image = self._make_fallback()
         except Exception as e:
-            print(f"Ошибка загрузки спрайтов игрока: {e}")
             self.image = self._make_fallback()
 
         self.rect = self.image.get_rect()
@@ -80,7 +80,10 @@ class Player(pygame.sprite.Sprite):
         self.attack_timer = 0
         self.attack_duration = 400
         self.attack_cooldown = 0
-        self.attack_cooldown_time = 1000
+        self.attack_cooldown_time = 500
+        
+        self.phone_in_air = False
+        self.camera_x = 0      
 
     def _make_fallback(self):
         size = (SPRITE_WIDTH * SPRITE_SCALE, SPRITE_HEIGHT * SPRITE_SCALE)
@@ -193,16 +196,20 @@ class Player(pygame.sprite.Sprite):
             self.vel_y = self.jump_power
             self.on_ground = False
 
-    def attack(self):
+    def attack(self, target_x, target_y):
         current_time = pygame.time.get_ticks()
-        if not self.is_attacking and current_time - self.attack_cooldown > self.attack_cooldown_time:
+        if not self.is_attacking and current_time - self.attack_cooldown > self.attack_cooldown_time and not self.phone_in_air:
             self.is_attacking = True
             self.attack_timer = current_time
             self.attack_cooldown = current_time
+            self.phone_in_air = True
+            
+            from entities.projectile import Projectile
             proj = Projectile(
                 self.rect.centerx,
                 self.rect.centery,
-                self.facing_right,
+                target_x,
+                target_y,
                 self
             )
             return proj

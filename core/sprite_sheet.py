@@ -9,15 +9,12 @@ class SpriteSheet:
 
         try:
             self.sheet = pygame.image.load(filename).convert_alpha()
-            print(f"Загружен спрайт-лист: {self.sheet.get_width()}x{self.sheet.get_height()}")
         except Exception as e:
-            print(f"Ошибка загрузки {filename}: {e}")
             self.sheet = pygame.Surface((frame_width * 4, frame_height * 4))
             self.sheet.fill((50, 50, 50))
 
         self.frames = []
         self._extract_frames()
-        print(f"Всего кадров: {len(self.frames)}")
 
     def _extract_frames(self):
         sheet_width = self.sheet.get_width()
@@ -25,9 +22,6 @@ class SpriteSheet:
 
         cols = sheet_width // self.frame_width
         rows = sheet_height // self.frame_height
-
-        print(f"Строк: {rows}, Столбцов: {cols}")
-        print(f"Ожидаемый размер кадра: {self.frame_width}x{self.frame_height}")
 
         for row in range(rows):
             for col in range(cols):
@@ -45,11 +39,8 @@ class SpriteSheet:
 
                     self.frames.append(frame)
 
-        print(f"Успешно нарезано {len(self.frames)} кадров")
-
     def get_frames(self, start, count):
         if start >= len(self.frames):
-            print(f"Ошибка: start={start} превышает количество кадров={len(self.frames)}")
             return []
 
         end = min(start + count, len(self.frames))
@@ -68,3 +59,4 @@ class SpriteSheet:
             count = cols
 
         return self.get_frames(start, count)
+        
