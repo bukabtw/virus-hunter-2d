@@ -1,4 +1,5 @@
 import pygame
+import os
 from settings import *
 
 class Platform(pygame.sprite.Sprite):
@@ -20,15 +21,11 @@ class Platform(pygame.sprite.Sprite):
 
             if sprite_path:
                 tile_image = pygame.image.load(sprite_path).convert_alpha()
-                tile_image = pygame.transform.scale(tile_image, (SPRITE_WIDTH, SPRITE_HEIGHT))
-                if width > SPRITE_WIDTH:
-                    for i in range(0, width, SPRITE_WIDTH):
-                        offset_x = i
-                        offset_y = 0
-                        self.image.blit(tile_image, (offset_x, offset_y))
-                else:
+                tile_width = tile_image.get_width()
+                tile_height = tile_image.get_height()
+                if width != tile_width or height != tile_height:
                     tile_image = pygame.transform.scale(tile_image, (width, height))
-                    self.image.blit(tile_image, (0, 0))
+                self.image.blit(tile_image, (0, 0))
             else:
                 # Заглушка
                 self.image.fill(COLORS['GRAY'])

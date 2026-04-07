@@ -14,14 +14,7 @@ class Game:
         pygame.display.set_caption("Virus Hunter")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font(None, 36)
-        try:
-            pc_icon_path = f"{SPRITES_PATH}/{ITEM_SPRITESHEET}"
-            pc_sheet = SpriteSheet(pc_icon_path, SPRITE_WIDTH, SPRITE_HEIGHT, SPRITE_SCALE)
-            self.pc_icon = pc_sheet.get_frames(0, 1)[0]
-            self.pc_icon = pygame.transform.scale(self.pc_icon, (20, 20))
-        except:
-            self.pc_icon = pygame.Surface((20, 20))
-            self.pc_icon.fill(COLORS['CYAN'])
+
     def start_level(self, level_num=1, difficulty=1):
         level_loader = LevelLoader()
         level_data = level_loader.get_level(level_num)
@@ -136,8 +129,7 @@ class Game:
             self.screen.blit(self.font.render(f"Уровень {level_num}", True, COLORS['WHITE']), (10, 10))
             self.screen.blit(self.font.render(f"Компьютеры: {len(player.collected_items)}/{total_items}", True, COLORS['WHITE']), (10, 50))
 
-            if player.collected_items:
-                self.screen.blit(self.pc_icon, (180, 50))
+
             self.screen.blit(self.font.render(f"Здоровье: {player.health}", True, COLORS['WHITE']), (10, 90))
             pygame.display.flip()
             clock.tick(FPS)

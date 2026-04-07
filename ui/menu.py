@@ -1,5 +1,6 @@
 import pygame, sys
 from settings import *
+import os
 
 class Button:
     def __init__(self, x, y, w, h, text, color, hover, action):
@@ -27,13 +28,15 @@ class Menu:
         self.game = game
         self.screen = game.screen
         self.running = True
-        self.font = pygame.font.Font(None, 48)
-        self.title_font = pygame.font.Font(None, 80)
+        self.font = pygame.font.Font(None, 36)
+        self.title_font = pygame.font.Font(None, 72)
         self.difficulty = 1
         self.buttons = []
         self._create_buttons()
         self.soundtrack = None
         self.load_soundtrack()
+        self.background_image = None
+        self.load_background()
 
     def load_soundtrack(self):
         soundtrack_path = os.path.join(SOUNDS_PATH, 'menu_soundtrack.wav')
@@ -46,9 +49,21 @@ class Menu:
         else:
             print(f"Файл меню-саундтрека не найден: {soundtrack_path}")
 
+    def load_background(self):
+        bg_path = os.path.join(SPRITES_PATH, 'main_menu.png')
+        if os.path.exists(bg_path):
+            try:
+                loaded_image = pygame.image.load(bg_path).convert()
+                self.background_image = pygame.transform.scale(loaded_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
+                print("Фоновое изображение меню загружено и масштабировано.")
+            except Exception as e:
+                print(f"Ошибка загрузки фона меню: {e}")
+        else:
+            print(f"Файл фона меню не найден: {bg_path}")
+
     def _create_buttons(self):
         cx, cy = SCREEN_WIDTH//2, SCREEN_HEIGHT//2
-        spacing = 80
+        spacing = 70
         start_y = cy - 150
         button_width = BUTTON_WIDTH
         button_height = BUTTON_HEIGHT
@@ -60,7 +75,7 @@ class Menu:
         
     def settings(self):
         self.settings_running = True
-        font_small = pygame.font.Font(None, 36)
+        font_small = pygame.font.Font(None, 24)
         
         options = [
             f"РАЗМЕР: {SCREEN_WIDTH}x{SCREEN_HEIGHT}",
@@ -120,9 +135,13 @@ class Menu:
                 if event.type == pygame.QUIT: self.quit()
                 for btn in self.buttons: btn.handle(event)
 
-            self.screen.fill(COLORS['DARK_GREEN'])
-            title = self.title_font.render("VIRUS HUNTER", True, COLORS['GREEN'])
-            self.screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, 100))
+            if self.background_image:
+                self.screen.blit(self.background_image, (0, 0))
+            else:
+                self.screen.fill(COLORS['DARK_GREEN'])
+            
+            title = self.title_font.render("VIRUS HUNTER", True, COLORS['BLUE'])
+            self.screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, 140))
 
             for btn in self.buttons: btn.draw(self.screen, self.font)
             pygame.display.flip()

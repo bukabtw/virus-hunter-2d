@@ -24,6 +24,3 @@ class HUD:
         total_items = self.level_loader.get_total_items(level_num)
         items_text = self.font.render(f"Компьютеры: {len(self.player.collected_items)}/{total_items}", True, COLORS['WHITE'])
         screen.blit(items_text, (10, 50))
-        if self.player.collected_items:
-            pc_icon = pygame.transform.scale(self.player.collected_items[0].image, (20, 20))
-            screen.blit(pc_icon, (180, 50))

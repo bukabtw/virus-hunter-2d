@@ -1,9 +1,9 @@
 import pygame
 from settings import (
     COLORS, SPRITE_WIDTH, SPRITE_HEIGHT, SPRITE_SCALE,
-    SPRITES_PATH, BOSS_SPRITESHEET, BOSS_ANIMATIONS
+    SPRITES_PATH, BOSS_SPRITESHEET, BOSS_ANIMATIONS, SCREEN_WIDTH
 )
-from enemy import Enemy
+from .enemy import Enemy
 
 try:
     from core.sprite_sheet import SpriteSheet
@@ -64,7 +64,7 @@ class Boss(pygame.sprite.Sprite):
         self.attack_duration = 1000
 
     def _make_fallback(self):
-        size = (SPRITE_WIDTH * SPRITE_SCALE * 2, SPRITE_HEIGHT * SPRITE_SCALE * 2)
+        size = (SPRITE_WIDTH * SPRITE_SCALE * 4, SPRITE_HEIGHT * SPRITE_SCALE * 4)
         surf = pygame.Surface(size)
         surf.fill(COLORS['PURPLE'])
         return surf
@@ -78,18 +78,15 @@ class Boss(pygame.sprite.Sprite):
             self.facing_right = True
             self.state = 'attack_right' if self.is_attacking else 'look_right'
 
-        # Обновление анимации атаки
         if self.is_attacking:
             if current_time - self.attack_timer > self.attack_duration:
                 self.is_attacking = False
         else:
-            # Спавн вирусов
             if current_time - self.spawn_timer > self.spawn_interval:
                 self.spawn_timer = current_time
                 virus = Enemy(self.rect.centerx, self.rect.bottom, speed=2.5)
                 enemies_group.add(virus)
                 all_sprites_group.add(virus)
-            # Случайная атака
             if current_time % 5000 < 10:
                 self.is_attacking = True
                 self.attack_timer = current_time
@@ -98,19 +95,19 @@ class Boss(pygame.sprite.Sprite):
 
         on_platform = False
         for p in platforms:
-            if abs(self.rect.bottom - p.top) < 10 and p.left <= self.rect.centerx <= p.right:
+            if abs(self.rect.bottom - p.rect.top) < 10 and p.rect.left <= self.rect.centerx <= p.rect.right:
                 on_platform = True
-                if self.rect.right >= p.right:
+                if self.rect.right >= p.rect.right:
                     self.direction = -1
-                elif self.rect.left <= p.left:
+                elif self.rect.left <= p.rect.left:
                     self.direction = 1
                 break
 
         if not on_platform:
             self.direction *= -1
 
-        if self.rect.right > 1200:
-            self.rect.right = 1200
+        if self.rect.right > SCREEN_WIDTH:
+            self.rect.right = SCREEN_WIDTH
             self.direction = -1
         if self.rect.left < 0:
             self.rect.left = 0

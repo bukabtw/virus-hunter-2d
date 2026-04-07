@@ -26,16 +26,16 @@ class Projectile(pygame.sprite.Sprite):
         self.owner = owner
         self.state = 'fly'
         self.return_speed = 3
-        self.max_distance = 400
+        self.max_distance = 800
         self.start_x = x
 
         try:
             sprite_path = f"{SPRITES_PATH}/{PROJECTILE_SPRITESHEET}"
-            sheet = SpriteSheet(sprite_path, SPRITE_WIDTH, SPRITE_HEIGHT, SPRITE_SCALE)
+            sheet = SpriteSheet(sprite_path, 32, 32, SPRITE_SCALE)
             self.fly_frames = sheet.get_row_frames(PROJECTILE_ANIMATIONS['fly'][0], PROJECTILE_ANIMATIONS['fly'][1])
             print(f"Projectile: Загружено кадров fly: {len(self.fly_frames)}")
             if self.fly_frames:
-                self.image = pygame.transform.scale(self.fly_frames[0], (32, 32))
+                self.image = self.fly_frames[0]
                 if not self.facing_right:
                     self.image = pygame.transform.flip(self.image, True, False)
             else:
@@ -47,7 +47,7 @@ class Projectile(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
-        self.speed = 10
+        self.speed = 20
 
     def _make_fallback(self):
         size = (SPRITE_WIDTH * SPRITE_SCALE // 4, SPRITE_HEIGHT * SPRITE_SCALE // 4)
@@ -64,7 +64,7 @@ class Projectile(pygame.sprite.Sprite):
 
             if abs(self.rect.centerx - self.start_x) >= self.max_distance:
                 self.state = 'return'
-            if self.rect.right < 0 or self.rect.left > 1200:
+            if self.rect.right < 0 or self.rect.left > 5000:
                 self.kill()
         elif self.state == 'return':
             if self.rect.centerx < player.rect.centerx:
@@ -85,13 +85,12 @@ class Projectile(pygame.sprite.Sprite):
             if self.fly_frames:
                 self.current_frame = (self.current_frame + 1) % len(self.fly_frames)
                 self.image = self.fly_frames[self.current_frame]
-                if not self.facing_right and self.state == 'fly':
-                    self.image = pygame.transform.flip(self.image, True, False)
-                elif self.state == 'return':
+                if self.state == 'return':
                     if self.rect.centerx < self.owner.rect.centerx:
                         self.facing_right = True
                     else:
                         self.facing_right = False
+                if not self.facing_right:
                     self.image = pygame.transform.flip(self.image, True, False)
 
 

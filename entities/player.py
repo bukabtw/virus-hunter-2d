@@ -69,7 +69,7 @@ class Player(pygame.sprite.Sprite):
         self.vel_x = 0
         self.vel_y = 0
         self.speed = 5
-        self.jump_power = -12
+        self.jump_power = -20
         self.gravity = 0.8
         self.health = 5
         self.friction = 0.8
@@ -106,7 +106,7 @@ class Player(pygame.sprite.Sprite):
                     if hasattr(p, 'platform_type') and p.platform_type == 'ram':
                         self.ram_platform = True
                 elif self.vel_y < 0:
-                    self.rect.top = p.bottom
+                    self.rect.top = p.rect.bottom
                     self.vel_y = 0
 
         if self.ram_platform:

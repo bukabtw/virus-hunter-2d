@@ -1,4 +1,5 @@
 import pygame
+from settings import MAP_WIDTH, MAP_HEIGHT
 
 class Camera:
     def __init__(self, width, height):
@@ -32,7 +33,7 @@ class Camera:
 
         new_x = min(0, new_x)
         new_y = min(0, new_y)
-        new_x = max(-(self.width), new_x)
-        new_y = max(-(self.height), new_y)
+        new_x = max(-(MAP_WIDTH - self.width), new_x)
+        new_y = max(-(MAP_HEIGHT - self.height), new_y)
         
         self.camera = pygame.Rect(new_x, new_y, self.width, self.height)
