@@ -1,12 +1,11 @@
 import pygame
 from settings import *
 from core.animated_entity import AnimatedEntity
-from core.damageable import Damageable  # 👈 добавить импорт
+from core.damageable import Damageable
 from entities.projectile import Projectile
 
-class Player(AnimatedEntity, Damageable):  # 👈 добавить Damageable
+class Player(AnimatedEntity, Damageable):
     def __init__(self, x, y):
-        # Анимации для игрока
         animations = {
             'idle_right': PLAYER_ANIMATIONS['idle_right'],
             'idle_left': PLAYER_ANIMATIONS['idle_left'],
@@ -21,10 +20,23 @@ class Player(AnimatedEntity, Damageable):  # 👈 добавить Damageable
         sprite_path = f"{SPRITES_PATH}/{PLAYER_SPRITESHEET}"
         super().__init__(x, y, sprite_path, SPRITE_WIDTH, SPRITE_HEIGHT, SPRITE_SCALE, animations)
         
-        # Инициализируем Damageable
         Damageable.__init__(self, max_health=5, invincible_duration=60)
         
-        # Физика
+        COLLIDE_W = 50
+        COLLIDE_H = 95
+        OFFSET_X = 38
+        OFFSET_Y = 28
+        
+        self.collide_offset_x = OFFSET_X
+        self.collide_offset_y = OFFSET_Y
+        
+        self.collision_rect = pygame.Rect(
+            self.rect.x + OFFSET_X,
+            self.rect.y + OFFSET_Y,
+            COLLIDE_W,
+            COLLIDE_H
+        )
+        
         self.vel_x = 0
         self.vel_y = 0
         self.speed = 5
@@ -32,7 +44,6 @@ class Player(AnimatedEntity, Damageable):  # 👈 добавить Damageable
         self.gravity = 0.8
         self.on_ground = True
         
-        # Атака
         self.collected_items = []
         self.is_attacking = False
         self.attack_timer = 0
@@ -47,47 +58,59 @@ class Player(AnimatedEntity, Damageable):  # 👈 добавить Damageable
     
     def update(self, platforms):
         self.update_invincibility()
+        
         self.vel_y += self.gravity
-        self.rect.y += self.vel_y
+        self.collision_rect.y += self.vel_y
         
         self.on_ground = False
-        self.ram_platform = False
+        
         for p in platforms:
-            if self.rect.colliderect(p):
+            if self.collision_rect.colliderect(p.rect):
                 if self.vel_y > 0:
-                    self.rect.bottom = p.rect.top
+                    self.collision_rect.bottom = p.rect.top
                     self.vel_y = 0
                     self.on_ground = True
-                    if hasattr(p, 'platform_type') and p.platform_type == 'ram':
-                        self.ram_platform = True
+                    self.ram_platform = hasattr(p, 'platform_type') and p.platform_type == 'ram'
+                    break
                 elif self.vel_y < 0:
-                    self.rect.top = p.rect.bottom
+                    self.collision_rect.top = p.rect.bottom
                     self.vel_y = 0
+                    break
+        
+        self.rect.x = self.collision_rect.x - self.collide_offset_x
+        self.rect.y = self.collision_rect.y - self.collide_offset_y
+        
+        self.collision_rect.x += self.vel_x
+        
+        for p in platforms:
+            if self.collision_rect.colliderect(p.rect):
+                if self.vel_x > 0:
+                    self.collision_rect.right = p.rect.left
+                elif self.vel_x < 0:
+                    self.collision_rect.left = p.rect.right
+                break
+        
+        self.rect.x = self.collision_rect.x - self.collide_offset_x
+        self.rect.y = self.collision_rect.y - self.collide_offset_y
         
         if self.ram_platform:
             self.speed = 6.5
         else:
             self.speed = 5
         
-        self.rect.x += self.vel_x
-        
-        for p in platforms:
-            if self.rect.colliderect(p):
-                if self.vel_x > 0:
-                    self.rect.right = p.rect.left
-                elif self.vel_x < 0:
-                    self.rect.left = p.rect.right
-        
-        if self.rect.left < 0:
-            self.rect.left = 0
-        if self.rect.right > MAP_WIDTH:
-            self.rect.right = MAP_WIDTH
-        if self.rect.top < 0:
-            self.rect.top = 0
-        if self.rect.bottom > MAP_HEIGHT:
-            self.rect.bottom = MAP_HEIGHT
+        if self.collision_rect.left < 0:
+            self.collision_rect.left = 0
+        if self.collision_rect.right > MAP_WIDTH:
+            self.collision_rect.right = MAP_WIDTH
+        if self.collision_rect.top < 0:
+            self.collision_rect.top = 0
+        if self.collision_rect.bottom > MAP_HEIGHT:
+            self.collision_rect.bottom = MAP_HEIGHT
             self.vel_y = 0
             self.on_ground = True
+        
+        self.rect.x = self.collision_rect.x - self.collide_offset_x
+        self.rect.y = self.collision_rect.y - self.collide_offset_y
         
         if self.is_attacking:
             self.state = 'attack_right' if self.facing_right else 'attack_left'
@@ -101,7 +124,7 @@ class Player(AnimatedEntity, Damageable):  # 👈 добавить Damageable
             self.state = 'idle_right' if self.facing_right else 'idle_left'
 
         self.update_animation()
-    
+
     def move_left(self):
         self.vel_x = -self.speed
         self.facing_right = False
@@ -117,7 +140,7 @@ class Player(AnimatedEntity, Damageable):  # 👈 добавить Damageable
         if self.on_ground:
             self.vel_y = self.jump_power
             self.on_ground = False
-    
+
     def attack(self, target_x, target_y):
         current_time = pygame.time.get_ticks()
         if not self.is_attacking and current_time - self.attack_cooldown > self.attack_cooldown_time and not self.phone_in_air:
@@ -135,7 +158,7 @@ class Player(AnimatedEntity, Damageable):  # 👈 добавить Damageable
             )
             return proj
         return None
-    
+
     def take_damage(self, amount):
         super().take_damage(amount)
 

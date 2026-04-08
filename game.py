@@ -265,7 +265,7 @@ class Game:
             pygame.draw.rect(self.screen, COLORS['YELLOW'], self.camera.apply_rect(exit_rect))
         
         self._draw_hud()
-        
+
         if self.state == GameState.PAUSED:
             overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
             overlay.set_alpha(180)

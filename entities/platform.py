@@ -11,6 +11,7 @@ class Platform(pygame.sprite.Sprite):
         
         self.image = pygame.Surface((width, height))
         self.image.fill(COLORS['BLACK'])
+        
         self.rect = pygame.Rect(x, y, width, height)
 
         try:
