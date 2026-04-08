@@ -1,18 +1,13 @@
-# Python cache
 __pycache__/
 *.pyc
 
-# Virtual environment
 .venv/
 venv/
 env/
 
-# PyCharm / IntelliJ settings
 .idea/
 
-# VS Code settings (на случай, если откроешь там)
 .vscode/
 
-# System files
 .DS_Store
 Thumbs.db
