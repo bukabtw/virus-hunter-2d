@@ -138,3 +138,8 @@ class Player(AnimatedEntity, Damageable):  # 👈 добавить Damageable
     
     def take_damage(self, amount):
         super().take_damage(amount)
+
+    def get_damage_color(self):
+        if self.is_flashing:
+            return COLORS['RED']
+        return None

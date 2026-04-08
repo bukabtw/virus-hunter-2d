@@ -33,22 +33,11 @@ class Menu:
         self.difficulty = 1
         self.buttons = []
         self._create_buttons()
-        self.soundtrack = None
-        self.load_soundtrack()
         self.background_image = None
         self.load_background()
-        self.menu_sound = None
 
     def load_soundtrack(self):
-        soundtrack_path = os.path.join(SOUNDS_PATH, 'menu_soundtrack.wav')
-        if os.path.exists(soundtrack_path):
-            try:
-                self.soundtrack = pygame.mixer.Sound(soundtrack_path)
-                self.soundtrack.play(-1)
-            except pygame.error as e:
-                print(f"Ошибка загрузки звука меню: {e}")
-        else:
-            print(f"Файл меню-саундтрека не найден: {soundtrack_path}")
+        self.game.sound_manager.load_music('menu', SOUND_MENU)
 
     def load_background(self):
         bg_path = os.path.join(SPRITES_PATH, 'main_menu.png')
@@ -123,8 +112,7 @@ class Menu:
         self._create_buttons()
 
     def start(self):
-        if self.soundtrack:
-            self.soundtrack.stop()
+        self.game.sound_manager.stop_music()
         self.running = False
         self.game.start_level(difficulty=self.difficulty)
 
@@ -133,6 +121,7 @@ class Menu:
         sys.exit()
 
     def run(self):
+        self.game.sound_manager.play_music('menu')
         while self.running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT: self.quit()

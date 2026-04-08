@@ -10,6 +10,7 @@ from entities.projectile import Projectile
 from levels.level_loader import LevelLoader
 from core.camera import Camera
 from core.game_state import GameState 
+from core.sound_manager import SoundManager
 
 class Game:
     def __init__(self):
@@ -18,21 +19,39 @@ class Game:
         pygame.display.set_caption("Virus Hunter")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font(None, 36)
-        self.level_sounds = {}
-        self.load_level_sounds()
         self.running = False
         self.level_num = 1
         self.difficulty = 1
         self.state = GameState.MENU
+        self.sound_manager = SoundManager()
+        self._load_all_sounds()
+        self._load_level_music()
     
-    def load_level_sounds(self):
+    def _load_all_sounds(self):
+        self.sound_manager.load_sound('player_attack', SOUND_PLAYER_ATTACK)
+        self.sound_manager.load_sound('player_jump', SOUND_PLAYER_JUMP)
+        self.sound_manager.load_sound('player_hit', SOUND_PLAYER_HIT)
+        
+        self.sound_manager.load_sound('enemy_attack', SOUND_ENEMY_ATTACK)
+        self.sound_manager.load_sound('enemy_hit', SOUND_ENEMY_HIT)
+        
+        self.sound_manager.load_sound('boss_attack', SOUND_BOSS_ATTACK)
+        self.sound_manager.load_sound('boss_hit', SOUND_BOSS_HIT)
+        self.sound_manager.load_sound('boss_spawn', SOUND_BOSS_SPAWN)
+        self.sound_manager.load_sound('boss_roar', SOUND_BOSS_ROAR)
+        self.sound_manager.load_sound('boss_death', SOUND_BOSS_DEATH)
+        
+        self.sound_manager.load_sound('collect', SOUND_COLLECT)
+        self.sound_manager.load_sound('victory', SOUND_VICTORY)
+        self.sound_manager.load_sound('game_over', SOUND_GAME_OVER)
+        self.sound_manager.load_sound('level_up', SOUND_LEVEL_UP)
+        self.sound_manager.load_music('menu', SOUND_MENU)
+
+    def _load_level_music(self):
         for i in range(1, 4):
             sound_path = os.path.join(SOUNDS_PATH, f"level_{i}.wav")
             if os.path.exists(sound_path):
-                try:
-                    self.level_sounds[i] = pygame.mixer.Sound(sound_path)
-                except pygame.error as e:
-                    print(f"Ошибка загрузки саундтрека уровня {i}: {e}")
+                self.sound_manager.load_music(f"level_{i}", sound_path)
             else:
                 print(f"Файл саундтрека уровня {i} не найден: {sound_path}")
 
@@ -62,12 +81,8 @@ class Game:
         self._cleanup()
 
     def _init_level(self):
-        for sound in self.level_sounds.values():
-            sound.stop()
+        self.sound_manager.play_music(f"level_{self.level_num}")
         
-        if self.level_num in self.level_sounds:
-            self.level_sounds[self.level_num].play(-1)
-
         self.level_loader = LevelLoader()
         self.level_data = self.level_loader.get_level(self.level_num)
         
@@ -102,6 +117,9 @@ class Game:
         self.platforms = self.level_data['platforms']
         self.last_time = pygame.time.get_ticks()
 
+        for enemy in self.enemies:
+            enemy.sound_manager = self.sound_manager
+
     def _handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -115,6 +133,7 @@ class Game:
                     self.player.move_right()
                 if event.key == pygame.K_SPACE:
                     self.player.jump()
+                    self.sound_manager.play_jump()
                 if event.key == pygame.K_ESCAPE:
                     if self.state == GameState.PLAYING:
                         self.state = GameState.PAUSED
@@ -160,13 +179,22 @@ class Game:
                     proj.hit()
                     damage = getattr(proj, 'damage', 5)
                     enemy.take_damage(damage)
+                    
+                    if hasattr(enemy, 'is_boss') and enemy.is_boss:
+                        self.sound_manager.play_hit('boss')
+                        if enemy.health <= 0:
+                            self.sound_manager.play_boss_death()
+                    else:
+                        self.sound_manager.play_hit('enemy')
                     break
 
+    
     def _check_item_collection(self):
         collected_items = pygame.sprite.spritecollide(self.player, self.items, True)
         for item in collected_items:
             self.player.collected_items.append(item)
             self.all_sprites.remove(item)
+            self.sound_manager.play_collect()
 
     def _check_player_damage(self):
         hit_enemies = pygame.sprite.spritecollide(self.player, self.enemies, False)
@@ -196,6 +224,7 @@ class Game:
     def _next_level(self):
         self.running = False
         if self.level_num < 3:
+            self.sound_manager.play_level_up()
             self.start_level(self.level_num + 1, difficulty=self.difficulty)
         else:
             self.state = GameState.VICTORY
@@ -220,7 +249,16 @@ class Game:
                 pygame.draw.rect(self.screen, COLORS['GREEN'], self.camera.apply_rect(p))
         
         for sprite in self.all_sprites:
-            self.screen.blit(sprite.image, self.camera.apply(sprite))
+            flash_color = None
+            if hasattr(sprite, 'get_damage_color'):
+                flash_color = sprite.get_damage_color()
+            
+            if flash_color:
+                colored_image = sprite.image.copy()
+                colored_image.fill(flash_color, special_flags=pygame.BLEND_RGB_MULT)
+                self.screen.blit(colored_image, self.camera.apply(sprite))
+            else:
+                self.screen.blit(sprite.image, self.camera.apply(sprite))
         
         if self.level_data.get('exit'):
             exit_rect = pygame.Rect(*self.level_data['exit'], 50, 50)
@@ -247,12 +285,11 @@ class Game:
         self.screen.blit(self.font.render(f"Здоровье: {self.player.health}", True, COLORS['WHITE']), (10, 90))
 
     def _cleanup(self):
-        if self.level_num in self.level_sounds:
-            self.level_sounds[self.level_num].stop()
+        self.sound_manager.stop_music()
 
     def show_victory_screen(self):
-        for sound in self.level_sounds.values():
-            sound.stop()
+        self.sound_manager.stop_music()
+        self.sound_manager.play_victory()
             
         self.screen.fill(COLORS['BLACK'])
         title = self.font.render("ПОБЕДА!", True, COLORS['GREEN'])
@@ -263,8 +300,8 @@ class Game:
         pygame.time.delay(3000)
     
     def show_game_over_screen(self):
-        for sound in self.level_sounds.values():
-            sound.stop()
+        self.sound_manager.stop_music()
+        self.sound_manager.play_game_over()
             
         self.screen.fill(COLORS['BLACK'])
         title = self.font.render("ИГРА ОКОНЧЕНА", True, COLORS['RED'])

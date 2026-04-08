@@ -68,3 +68,8 @@ class Enemy(AnimatedEntity, Damageable):
             self.knockback_direction = -self.direction
             if self.is_dead:
                 self.kill()
+
+    def get_damage_color(self):
+        if self.is_flashing:
+            return COLORS['RED']
+        return None

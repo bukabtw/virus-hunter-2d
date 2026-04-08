@@ -122,6 +122,25 @@ DIFFICULTY = {
 
 DEFAULT_RESOLUTIONS = [(1200, 700), (1024, 768), (800, 600), (1920, 1080)]
 
+SOUND_PLAYER_ATTACK = os.path.join(SOUNDS_PATH, 'player_attack.wav')
+SOUND_PLAYER_JUMP = os.path.join(SOUNDS_PATH, 'player_jump.wav')
+SOUND_PLAYER_HIT = os.path.join(SOUNDS_PATH, 'player_hit.wav')
+
+SOUND_ENEMY_ATTACK = os.path.join(SOUNDS_PATH, 'enemy_attack.wav')
+SOUND_ENEMY_HIT = os.path.join(SOUNDS_PATH, 'enemy_hit.wav')
+
+SOUND_BOSS_ATTACK = os.path.join(SOUNDS_PATH, 'boss_attack.wav')
+SOUND_BOSS_HIT = os.path.join(SOUNDS_PATH, 'boss_hit.wav')
+SOUND_BOSS_SPAWN = os.path.join(SOUNDS_PATH, 'boss_spawn.wav')
+SOUND_BOSS_ROAR = os.path.join(SOUNDS_PATH, 'boss_roar.wav')
+SOUND_BOSS_DEATH = os.path.join(SOUNDS_PATH, 'boss_death.wav')
+
+SOUND_COLLECT = os.path.join(SOUNDS_PATH, 'collect.wav')
+SOUND_VICTORY = os.path.join(SOUNDS_PATH, 'victory.wav')
+SOUND_GAME_OVER = os.path.join(SOUNDS_PATH, 'game_over.wav')
+SOUND_LEVEL_UP = os.path.join(SOUNDS_PATH, 'level_up.wav')
+SOUND_MENU = os.path.join(SOUNDS_PATH, 'menu_soundtrack.wav')
+
 MUSIC_VOLUME = 0.5
 SFX_VOLUME = 0.7
 

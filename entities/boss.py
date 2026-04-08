@@ -30,6 +30,8 @@ class Boss(AnimatedEntity, Damageable):
         
         self.knockback_timer = 0
         self.knockback_direction = 0
+        self.is_boss = True
+        self.sound_manager = None
     
     def update(self, platforms, current_time, enemies_group, all_sprites_group, player):
         if self.knockback_timer > 0:
@@ -87,3 +89,8 @@ class Boss(AnimatedEntity, Damageable):
         else:
             self.knockback_timer = 8
             self.knockback_direction = -self.direction
+
+    def get_damage_color(self):
+        if self.is_flashing:
+            return COLORS['BLACK']
+        return None
