@@ -33,8 +33,8 @@ ENEMY_SPRITESHEET = 'default_virus.png'
 BOSS_SPRITESHEET = 'boss_virus.png'
 ITEM_SPRITESHEET = 'pc.png'
 PROJECTILE_SPRITESHEET = 'phone.png'
-PHONE_SPRITE_SIZE = (768, 64)
-PHONE_FRAME_WIDTH = 64
+PHONE_SPRITE_SIZE = (384, 32)
+PHONE_FRAME_WIDTH = 32
 
 ENEMY_ANIMATIONS = {
     'idle': (0, 5),
@@ -61,10 +61,10 @@ PLAYER_ANIMATIONS = {
     'idle_left': (23, 2),
     'walk_right': (11, 10),
     'walk_left': (9, 10),
-    'jump_right': (4, 2),
-    'jump_left': (2, 2),
-    'attack_right': (29, 6),
-    'attack_left': (27, 6)
+    'jump_right': (29, 5),
+    'jump_left': (27, 5),
+    'attack_right': (15, 6),
+    'attack_left': (13, 6)
 }
 
 PROJECTILE_ANIMATIONS = {
@@ -116,7 +116,7 @@ GRAVITY = 0.8
 DIFFICULTY = {
     1: {'name': 'Лёгкий', 'enemy_speed': 1.5, 'player_health': 5},
     2: {'name': 'Средний', 'enemy_speed': 2.5, 'player_health': 3},
-    3: {'name': 'Сложный', 'enemy_speed': 3.5, 'player_health': 2},
+    3: {'name': 'Сложный', 'enemy_speed': 3.5, 'player_health': 1},
 }
 
 DEFAULT_RESOLUTIONS = [(1200, 700), (1024, 768), (800, 600), (1920, 1080)]
