@@ -29,7 +29,7 @@ class Menu:
         self.screen = game.screen
         self.running = True
         self.font = pygame.font.Font(None, 36)
-        self.title_font = pygame.font.Font(None, 72)
+        self.title_font = pygame.font.Font(None, 64)
         self.difficulty = 1
         self.buttons = []
         self._create_buttons()
@@ -62,15 +62,16 @@ class Menu:
             print(f"Файл фона меню не найден: {bg_path}")
 
     def _create_buttons(self):
-        cx, cy = SCREEN_WIDTH//2, SCREEN_HEIGHT//2
-        spacing = 70
-        start_y = cy - 150
+        cx = SCREEN_WIDTH//2 - 18
+        cy = SCREEN_HEIGHT//2
+        spacing = 45
+        start_y = cy - 100
         button_width = BUTTON_WIDTH
         button_height = BUTTON_HEIGHT
         self.buttons = [
-            Button(cx - button_width//2, start_y, button_width, button_height, "Старт", COLORS['GREEN'], (0,150,0), self.start),
-            Button(cx - button_width//2, start_y + spacing, button_width, button_height, "Настройки", COLORS['GRAY'], (100,100,100), self.settings),
-            Button(cx - button_width//2, start_y + 2 * spacing, button_width, button_height, "Выход", COLORS['RED'], (150,0,0), self.quit)
+            Button(cx - button_width//2, start_y, button_width, button_height, "Старт", COLORS['PURPLE'], (0,150,0), self.start),
+            Button(cx - button_width//2, start_y + spacing, button_width, button_height, "Настройки", COLORS['PURPLE'], (100,100,100), self.settings),
+            Button(cx - button_width//2, start_y + 2 * spacing, button_width, button_height, "Выход", COLORS['PURPLE'], (150,0,0), self.quit)
         ]
         
     def settings(self):
@@ -142,8 +143,8 @@ class Menu:
             else:
                 self.screen.fill(COLORS['DARK_GREEN'])
             
-            title = self.title_font.render("VIRUS HUNTER", True, COLORS['BLUE'])
-            self.screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, 140))
+            title = self.title_font.render("VIRUS HUNTER", True, COLORS['PURPLE'])
+            self.screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2-18, 195))
 
             for btn in self.buttons: btn.draw(self.screen, self.font)
             pygame.display.flip()
