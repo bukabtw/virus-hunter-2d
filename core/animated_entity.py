@@ -15,8 +15,12 @@ class AnimatedEntity(pygame.sprite.Sprite):
         for anim_name, (row, count) in animations.items():
             self.frames[anim_name] = sheet.get_row_frames(row, count)
         
-        self.image = self.frames.get('idle', [None])[0]
-        if self.image is None:
+        for anim_name in ['fly', 'idle', 'walk_right', 'look_right']:
+            frames = self.frames.get(anim_name, [])
+            if frames:
+                self.image = frames[0]
+                break
+        else:
             self.image = self._make_fallback()
         
         self.rect = self.image.get_rect(topleft=(x, y))

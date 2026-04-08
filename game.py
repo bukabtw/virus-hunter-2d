@@ -9,6 +9,7 @@ from entities.item import Item
 from entities.projectile import Projectile
 from levels.level_loader import LevelLoader
 from core.camera import Camera
+from core.game_state import GameState 
 
 class Game:
     def __init__(self):
@@ -22,6 +23,7 @@ class Game:
         self.running = False
         self.level_num = 1
         self.difficulty = 1
+        self.state = GameState.MENU
     
     def load_level_sounds(self):
         for i in range(1, 4):
@@ -47,6 +49,7 @@ class Game:
     def start_level(self, level_num=1, difficulty=1):
         self.level_num = level_num
         self.difficulty = difficulty
+        self.state = GameState.PLAYING
         self._init_level()
         self.running = True
         
@@ -113,7 +116,10 @@ class Game:
                 if event.key == pygame.K_SPACE:
                     self.player.jump()
                 if event.key == pygame.K_ESCAPE:
-                    self.running = False
+                    if self.state == GameState.PLAYING:
+                        self.state = GameState.PAUSED
+                    elif self.state == GameState.PAUSED:
+                        self.state = GameState.PLAYING
             
             if event.type == pygame.KEYUP:
                 keys = pygame.key.get_pressed()
@@ -132,12 +138,15 @@ class Game:
                     self.all_sprites.add(proj)
 
     def _update(self, dt):
+        if self.state != GameState.PLAYING:
+            return
+        
         current_time = pygame.time.get_ticks()
         
         self.player.update(self.platforms)
         self.enemies.update(self.platforms, current_time, self.enemies, self.all_sprites, self.player)
         self.projectiles.update(self.player)
-
+        
         self._check_projectile_hits()
         self._check_item_collection()
         self._check_player_damage()
@@ -162,11 +171,6 @@ class Game:
     def _check_player_damage(self):
         hit_enemies = pygame.sprite.spritecollide(self.player, self.enemies, False)
         for enemy in hit_enemies:
-            self.player.take_damage(1)
-    
-    def _check_player_damage(self):
-        hit_enemies = pygame.sprite.spritecollide(self.player, self.enemies, False)
-        for enemy in hit_enemies:
             if self.player.invincible_timer <= 0:
                 self.player.take_damage(1)
                 if hasattr(enemy, 'knockback_timer'):
@@ -186,7 +190,7 @@ class Game:
         
         if self.player.health <= 0:
             self.running = False
-            self.show_game_over_screen()
+            self.state = GameState.GAME_OVER
             return
 
     def _next_level(self):
@@ -194,7 +198,8 @@ class Game:
         if self.level_num < 3:
             self.start_level(self.level_num + 1, difficulty=self.difficulty)
         else:
-            self.show_victory_screen()
+            self.state = GameState.VICTORY
+            self.running = False
 
     def _draw(self):
         self.camera.update(self.player)
@@ -223,6 +228,16 @@ class Game:
         
         self._draw_hud()
         
+        if self.state == GameState.PAUSED:
+            overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+            overlay.set_alpha(180)
+            overlay.fill(COLORS['BLACK'])
+            self.screen.blit(overlay, (0, 0))
+            pause_text = self.font.render("ПАУЗА", True, COLORS['WHITE'])
+            self.screen.blit(pause_text, (SCREEN_WIDTH//2 - pause_text.get_width()//2, SCREEN_HEIGHT//2 - 50))
+            hint_text = self.font.render("Нажмите ESC для продолжения", True, COLORS['YELLOW'])
+            self.screen.blit(hint_text, (SCREEN_WIDTH//2 - hint_text.get_width()//2, SCREEN_HEIGHT//2 + 20))
+        
         pygame.display.flip()
 
     def _draw_hud(self):
@@ -234,8 +249,6 @@ class Game:
     def _cleanup(self):
         if self.level_num in self.level_sounds:
             self.level_sounds[self.level_num].stop()
-        from ui.menu import Menu
-        Menu(self).run()
 
     def show_victory_screen(self):
         for sound in self.level_sounds.values():
@@ -248,9 +261,6 @@ class Game:
         self.screen.blit(subtitle, (SCREEN_WIDTH//2 - subtitle.get_width()//2, SCREEN_HEIGHT//2))
         pygame.display.flip()
         pygame.time.delay(3000)
-        
-        from ui.menu import Menu
-        Menu(self).run()
     
     def show_game_over_screen(self):
         for sound in self.level_sounds.values():
@@ -271,10 +281,27 @@ class Game:
                     sys.exit()
                 if event.type == pygame.KEYDOWN:
                     waiting = False
-        
-        from ui.menu import Menu
-        Menu(self).run()
     
     def run(self):
         from ui.menu import Menu
-        Menu(self).run()
+        
+        while True:
+            if self.state == GameState.MENU:
+                menu = Menu(self)
+                menu.run()
+                self.state = GameState.PLAYING
+                self.start_level(level_num=1, difficulty=self.difficulty)
+            
+            elif self.state == GameState.PLAYING:
+                pass
+            
+            elif self.state == GameState.PAUSED:
+                pygame.time.wait(100)
+            
+            elif self.state == GameState.GAME_OVER:
+                self.show_game_over_screen()
+                self.state = GameState.MENU
+            
+            elif self.state == GameState.VICTORY:
+                self.show_victory_screen()
+                self.state = GameState.MENU
