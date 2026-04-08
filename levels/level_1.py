@@ -1,7 +1,7 @@
 import pygame
 from settings import MAP_WIDTH, MAP_HEIGHT
 
-def get_level_1():
+def get_level():
     platforms = [
         pygame.Rect(0, MAP_HEIGHT - 50, MAP_WIDTH, 50),
         

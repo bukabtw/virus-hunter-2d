@@ -1,10 +1,12 @@
 import pygame
 from settings import *
 from core.animated_entity import AnimatedEntity
+from core.damageable import Damageable  # 👈 добавить импорт
 from entities.projectile import Projectile
 
-class Player(AnimatedEntity):
+class Player(AnimatedEntity, Damageable):  # 👈 добавить Damageable
     def __init__(self, x, y):
+        # Анимации для игрока
         animations = {
             'idle_right': PLAYER_ANIMATIONS['idle_right'],
             'idle_left': PLAYER_ANIMATIONS['idle_left'],
@@ -18,36 +20,33 @@ class Player(AnimatedEntity):
         
         sprite_path = f"{SPRITES_PATH}/{PLAYER_SPRITESHEET}"
         super().__init__(x, y, sprite_path, SPRITE_WIDTH, SPRITE_HEIGHT, SPRITE_SCALE, animations)
-
+        
+        # Инициализируем Damageable
+        Damageable.__init__(self, max_health=5, invincible_duration=60)
+        
+        # Физика
         self.vel_x = 0
         self.vel_y = 0
         self.speed = 5
         self.jump_power = -20
         self.gravity = 0.8
         self.on_ground = True
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
-        self.rect.width = SPRITE_WIDTH * SPRITE_SCALE
-        self.rect.height = SPRITE_HEIGHT * SPRITE_SCALE
-        self.health = 5
-        self.collected_items = []
         
+        # Атака
+        self.collected_items = []
         self.is_attacking = False
         self.attack_timer = 0
         self.attack_duration = 400
         self.attack_cooldown = 0
         self.attack_cooldown_time = 500
         self.phone_in_air = False
-        self.invincible_timer = 0
-        self.invincible_duration = 60
         self.camera_x = 0
         self.camera_y = 0
+
         self.ram_platform = False
     
     def update(self, platforms):
-        if self.invincible_timer > 0:
-            self.invincible_timer -= 1
+        self.update_invincibility()
         self.vel_y += self.gravity
         self.rect.y += self.vel_y
         
@@ -100,7 +99,7 @@ class Player(AnimatedEntity):
             self.state = 'jump_right' if self.facing_right else 'jump_left'
         else:
             self.state = 'idle_right' if self.facing_right else 'idle_left'
-        
+
         self.update_animation()
     
     def move_left(self):
@@ -138,8 +137,4 @@ class Player(AnimatedEntity):
         return None
     
     def take_damage(self, amount):
-        if self.invincible_timer <= 0:
-            self.health -= amount
-            self.invincible_timer = self.invincible_duration
-            if self.health < 0:
-                self.health = 0
+        super().take_damage(amount)

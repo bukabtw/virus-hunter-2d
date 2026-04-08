@@ -1,9 +1,8 @@
 import pygame
 from settings import MAP_WIDTH, MAP_HEIGHT
 
-def get_level_3():
+def get_level():
     platforms = [
-
         pygame.Rect(0, MAP_HEIGHT - 50, 300, 50),
         pygame.Rect(350, MAP_HEIGHT - 120, 200, 30),
         pygame.Rect(600, MAP_HEIGHT - 180, 200, 30),

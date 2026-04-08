@@ -1,9 +1,10 @@
 import pygame
 from settings import *
 from core.animated_entity import AnimatedEntity
+from core.damageable import Damageable
 from entities.enemy import Enemy
 
-class Boss(AnimatedEntity):
+class Boss(AnimatedEntity, Damageable):
     def __init__(self, x, y, spawn_interval=3000):
         animations = {
             'idle': BOSS_ANIMATIONS['idle'],
@@ -16,7 +17,8 @@ class Boss(AnimatedEntity):
         sprite_path = f"{SPRITES_PATH}/{BOSS_SPRITESHEET}"
         super().__init__(x, y, sprite_path, SPRITE_WIDTH, SPRITE_HEIGHT, SPRITE_SCALE, animations)
         
-        self.health = 100
+        Damageable.__init__(self, max_health=100, invincible_duration=30)
+        
         self.speed = 1.5
         self.direction = 1
         

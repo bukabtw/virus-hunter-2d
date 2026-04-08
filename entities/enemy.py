@@ -1,8 +1,9 @@
 import pygame
 from settings import *
 from core.animated_entity import AnimatedEntity
+from core.damageable import Damageable
 
-class Enemy(AnimatedEntity):
+class Enemy(AnimatedEntity, Damageable):
     def __init__(self, x, y, speed=1.5):
         animations = {
             'idle': ENEMY_ANIMATIONS['idle'],
@@ -15,8 +16,9 @@ class Enemy(AnimatedEntity):
         sprite_path = f"{SPRITES_PATH}/{ENEMY_SPRITESHEET}"
         super().__init__(x, y, sprite_path, SPRITE_WIDTH, SPRITE_HEIGHT, SPRITE_SCALE, animations)
         
+        Damageable.__init__(self, max_health=10, invincible_duration=20)
+        
         self.speed = speed
-        self.health = 10
         self.direction = 1
         self.attack_timer = 0
         self.attack_delay = 40
@@ -24,6 +26,7 @@ class Enemy(AnimatedEntity):
         self.knockback_direction = 0
     
     def update(self, platforms, current_time, enemies, all_sprites, player):
+        self.update_invincibility()
         if self.attack_timer > 0:
             self.attack_timer -= 1
         if self.knockback_timer > 0:
@@ -60,9 +63,8 @@ class Enemy(AnimatedEntity):
         self.update_animation()
     
     def take_damage(self, amount):
-        self.health -= amount
-        if self.health <= 0:
-            self.kill()
-        else:
+        if super().take_damage(amount):
             self.knockback_timer = 8
             self.knockback_direction = -self.direction
+            if self.is_dead:
+                self.kill()
