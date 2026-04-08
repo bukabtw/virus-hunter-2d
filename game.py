@@ -19,6 +19,9 @@ class Game:
         self.font = pygame.font.Font(None, 36)
         self.level_sounds = {}
         self.load_level_sounds()
+        self.running = False
+        self.level_num = 1
+        self.difficulty = 1
     
     def load_level_sounds(self):
         for i in range(1, 4):
@@ -42,163 +45,197 @@ class Game:
             return None
 
     def start_level(self, level_num=1, difficulty=1):
+        self.level_num = level_num
+        self.difficulty = difficulty
+        self._init_level()
+        self.running = True
+        
+        while self.running:
+            dt = self.clock.tick(FPS) / 16.0
+            self._handle_events()
+            self._update(dt)
+            self._draw()
+        
+        self._cleanup()
+
+    def _init_level(self):
         for sound in self.level_sounds.values():
             sound.stop()
         
-        if level_num in self.level_sounds:
-            self.level_sounds[level_num].play(-1)
+        if self.level_num in self.level_sounds:
+            self.level_sounds[self.level_num].play(-1)
 
-        level_loader = LevelLoader()
-        level_data = level_loader.get_level(level_num)
-        player = Player(100, SCREEN_HEIGHT - 150)
-        all_sprites = pygame.sprite.Group(player)
-        enemies = pygame.sprite.Group()
-        items = pygame.sprite.Group()
-        projectiles = pygame.sprite.Group()
-        camera = Camera(SCREEN_WIDTH, SCREEN_HEIGHT)
-        background = self.load_background(level_num)
-        enemy_speed = DIFFICULTY[difficulty]['enemy_speed']
+        self.level_loader = LevelLoader()
+        self.level_data = self.level_loader.get_level(self.level_num)
         
-        for ex, ey in level_data['enemies']:
+        self.player = Player(100, SCREEN_HEIGHT - 150)
+        self.all_sprites = pygame.sprite.Group(self.player)
+        self.enemies = pygame.sprite.Group()
+        self.items = pygame.sprite.Group()
+        self.projectiles = pygame.sprite.Group()
+
+        self.camera = Camera(SCREEN_WIDTH, SCREEN_HEIGHT)
+        self.background = self.load_background(self.level_num)
+
+        enemy_speed = DIFFICULTY[self.difficulty]['enemy_speed']
+        for ex, ey in self.level_data['enemies']:
             enemy = Enemy(ex, ey, speed=enemy_speed)
-            enemies.add(enemy)
-            all_sprites.add(enemy)
+            self.enemies.add(enemy)
+            self.all_sprites.add(enemy)
         
-        for ix, iy in level_data['items']:
+        for ix, iy in self.level_data['items']:
             item = Item(ix, iy)
-            items.add(item)
-            all_sprites.add(item)
+            self.items.add(item)
+            self.all_sprites.add(item)
         
-        boss = None
-        if level_data.get('boss'):
+        self.boss = None
+        if self.level_data.get('boss'):
             from entities.boss import Boss
-            bx, by = level_data['boss']
-            boss = Boss(bx, by)
-            enemies.add(boss)
-            all_sprites.add(boss)
+            bx, by = self.level_data['boss']
+            self.boss = Boss(bx, by)
+            self.enemies.add(self.boss)
+            self.all_sprites.add(self.boss)
         
-        platforms = level_data['platforms']
-        running = True
-        clock = pygame.time.Clock()
-        last_time = pygame.time.get_ticks()
+        self.platforms = self.level_data['platforms']
+        self.last_time = pygame.time.get_ticks()
+
+    def _handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_a or event.key == pygame.K_LEFT:
+                    self.player.move_left()
+                if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                    self.player.move_right()
+                if event.key == pygame.K_SPACE:
+                    self.player.jump()
+                if event.key == pygame.K_ESCAPE:
+                    self.running = False
+            
+            if event.type == pygame.KEYUP:
+                keys = pygame.key.get_pressed()
+                moving_left = keys[pygame.K_a] or keys[pygame.K_LEFT]
+                moving_right = keys[pygame.K_d] or keys[pygame.K_RIGHT]
+                if not moving_left and not moving_right:
+                    self.player.stop()
+            
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mouse_x, mouse_y = pygame.mouse.get_pos()
+                world_x = mouse_x - self.camera.camera.x
+                world_y = mouse_y - self.camera.camera.y
+                proj = self.player.attack(world_x, world_y)
+                if proj:
+                    self.projectiles.add(proj)
+                    self.all_sprites.add(proj)
+
+    def _update(self, dt):
+        current_time = pygame.time.get_ticks()
         
-        while running:
-            current_time = pygame.time.get_ticks()
-            dt = (current_time - last_time) / 16.0
-            last_time = current_time
-            
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_a or event.key == pygame.K_LEFT:
-                        player.move_left()
-                    if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
-                        player.move_right()
-                    if event.key == pygame.K_SPACE:
-                        player.jump()
-                    if event.key == pygame.K_ESCAPE:
-                        running = False
-                if event.type == pygame.KEYUP:
-                    keys = pygame.key.get_pressed()
-                    moving_left = keys[pygame.K_a] or keys[pygame.K_LEFT]
-                    moving_right = keys[pygame.K_d] or keys[pygame.K_RIGHT]
-                    if not moving_left and not moving_right:
-                        player.stop()
-                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    mouse_x, mouse_y = pygame.mouse.get_pos()
-                    world_x = mouse_x - camera.camera.x
-                    world_y = mouse_y - camera.camera.y
-                    proj = player.attack(world_x, world_y)
-                    if proj:
-                        projectiles.add(proj)
-                        all_sprites.add(proj)
-            
-            player.update(platforms)
-            enemies.update(platforms, current_time, enemies, all_sprites, player)
-            projectiles.update(player)
-            
-            health_bar_width = 200
-            health_bar_height = 20
-            health_ratio = player.health / 5
-            health_bar_fill = health_bar_width * health_ratio
-            pygame.draw.rect(self.screen, COLORS['RED'], (10, 130, health_bar_width, health_bar_height))
-            pygame.draw.rect(self.screen, COLORS['GREEN'], (10, 130, health_bar_fill, health_bar_height))
-            pygame.draw.rect(self.screen, COLORS['WHITE'], (10, 130, health_bar_width, health_bar_height), 2)
-            health_text = self.font.render("Здоровье", True, COLORS['WHITE'])
-            self.screen.blit(health_text, (10, 105))
-            
-            for proj in projectiles:
-                hit_enemies = pygame.sprite.spritecollide(proj, enemies, False)
-                for enemy in hit_enemies:
-                    if enemy != proj.owner and not proj.has_hit:
-                        proj.hit()
-                        damage = getattr(proj, 'damage', 5)
-                        enemy.take_damage(damage)
-                        break
-                        
-            collected_items = pygame.sprite.spritecollide(player, items, True)
-            for item in collected_items:
-                player.collected_items.append(item)
-                all_sprites.remove(item)
-            
-            next_level = False
-            if level_data.get('exit'):
-                exit_rect = pygame.Rect(*level_data['exit'], 50, 50)
-                if player.rect.colliderect(exit_rect):
-                    next_level = True
-            if boss and boss.health <= 0:
-                next_level = True
-            if player.health <= 0:
-                running = False
-                self.show_game_over_screen()
+        self.player.update(self.platforms)
+        self.enemies.update(self.platforms, current_time, self.enemies, self.all_sprites, self.player)
+        self.projectiles.update(self.player)
+
+        self._check_projectile_hits()
+        self._check_item_collection()
+        self._check_player_damage()
+        self._check_level_transition(current_time)
+
+    def _check_projectile_hits(self):
+        for proj in self.projectiles:
+            hit_enemies = pygame.sprite.spritecollide(proj, self.enemies, False)
+            for enemy in hit_enemies:
+                if enemy != proj.owner and not proj.has_hit:
+                    proj.hit()
+                    damage = getattr(proj, 'damage', 5)
+                    enemy.take_damage(damage)
+                    break
+
+    def _check_item_collection(self):
+        collected_items = pygame.sprite.spritecollide(self.player, self.items, True)
+        for item in collected_items:
+            self.player.collected_items.append(item)
+            self.all_sprites.remove(item)
+
+    def _check_player_damage(self):
+        hit_enemies = pygame.sprite.spritecollide(self.player, self.enemies, False)
+        for enemy in hit_enemies:
+            self.player.take_damage(1)
+    
+    def _check_player_damage(self):
+        hit_enemies = pygame.sprite.spritecollide(self.player, self.enemies, False)
+        for enemy in hit_enemies:
+            if self.player.invincible_timer <= 0:
+                self.player.take_damage(1)
+                if hasattr(enemy, 'knockback_timer'):
+                    enemy.knockback_timer = 10
+                    enemy.knockback_direction = -enemy.direction if enemy.direction else -1
+
+    def _check_level_transition(self, current_time):
+        # Проверка выхода
+        if self.level_data.get('exit'):
+            exit_rect = pygame.Rect(*self.level_data['exit'], 50, 50)
+            if self.player.rect.colliderect(exit_rect):
+                self._next_level()
                 return
-            
-            if next_level:
-                running = False
-                if level_num < 3:
-                    self.start_level(level_num + 1, difficulty=difficulty)
-                else:
-                    self.show_victory_screen()
-                return
-            
-            camera.update(player)
-            player.camera_x = camera.camera.x
-            player.camera_y = camera.camera.y
-            
-            if background:
-                self.screen.blit(background, (0, 0))
+        
+        if self.boss and self.boss.health <= 0:
+            self._next_level()
+            return
+        
+        if self.player.health <= 0:
+            self.running = False
+            self.show_game_over_screen()
+            return
+
+    def _next_level(self):
+        self.running = False
+        if self.level_num < 3:
+            self.start_level(self.level_num + 1, difficulty=self.difficulty)
+        else:
+            self.show_victory_screen()
+
+    def _draw(self):
+        self.camera.update(self.player)
+        self.player.camera_x = self.camera.camera.x
+        self.player.camera_y = self.camera.camera.y
+
+        if self.background:
+            self.screen.blit(self.background, (0, 0))
+        else:
+            self.screen.fill(COLORS['DARK_GREEN'])
+        
+        for p in self.platforms:
+            if hasattr(p, 'image') and p.image:
+                self.screen.blit(p.image, self.camera.apply(p))
             else:
-                self.screen.fill(COLORS['DARK_GREEN'])
-            
-            for p in platforms:
-                if hasattr(p, 'image') and p.image:
-                    self.screen.blit(p.image, camera.apply(p))
-                else:
-                    pygame.draw.rect(self.screen, COLORS['GREEN'], camera.apply_rect(p))
-            
-            for sprite in all_sprites:
-                self.screen.blit(sprite.image, camera.apply(sprite))
-            
-            if level_data.get('exit'):
-                exit_rect = pygame.Rect(*level_data['exit'], 50, 50)
-                pygame.draw.rect(self.screen, COLORS['YELLOW'], camera.apply_rect(exit_rect))
-            
-            total_items = level_loader.get_total_items(level_num)
-            self.screen.blit(self.font.render(f"Уровень {level_num}", True, COLORS['WHITE']), (10, 10))
-            self.screen.blit(self.font.render(f"Компьютеры: {len(player.collected_items)}/{total_items}", True, COLORS['WHITE']), (10, 50))
-            self.screen.blit(self.font.render(f"Здоровье: {player.health}", True, COLORS['WHITE']), (10, 90))
-            
-            pygame.display.flip()
-            clock.tick(FPS)
+                pygame.draw.rect(self.screen, COLORS['GREEN'], self.camera.apply_rect(p))
         
-        if level_num in self.level_sounds:
-            self.level_sounds[level_num].stop()
+        for sprite in self.all_sprites:
+            self.screen.blit(sprite.image, self.camera.apply(sprite))
         
+        if self.level_data.get('exit'):
+            exit_rect = pygame.Rect(*self.level_data['exit'], 50, 50)
+            pygame.draw.rect(self.screen, COLORS['YELLOW'], self.camera.apply_rect(exit_rect))
+        
+        self._draw_hud()
+        
+        pygame.display.flip()
+
+    def _draw_hud(self):
+        total_items = self.level_loader.get_total_items(self.level_num)
+        self.screen.blit(self.font.render(f"Уровень {self.level_num}", True, COLORS['WHITE']), (10, 10))
+        self.screen.blit(self.font.render(f"Компьютеры: {len(self.player.collected_items)}/{total_items}", True, COLORS['WHITE']), (10, 50))
+        self.screen.blit(self.font.render(f"Здоровье: {self.player.health}", True, COLORS['WHITE']), (10, 90))
+
+    def _cleanup(self):
+        if self.level_num in self.level_sounds:
+            self.level_sounds[self.level_num].stop()
         from ui.menu import Menu
         Menu(self).run()
-    
+
     def show_victory_screen(self):
         for sound in self.level_sounds.values():
             sound.stop()

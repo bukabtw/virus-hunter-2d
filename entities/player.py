@@ -39,12 +39,15 @@ class Player(AnimatedEntity):
         self.attack_cooldown = 0
         self.attack_cooldown_time = 500
         self.phone_in_air = False
+        self.invincible_timer = 0
+        self.invincible_duration = 60
         self.camera_x = 0
         self.camera_y = 0
-
         self.ram_platform = False
     
     def update(self, platforms):
+        if self.invincible_timer > 0:
+            self.invincible_timer -= 1
         self.vel_y += self.gravity
         self.rect.y += self.vel_y
         
@@ -135,6 +138,8 @@ class Player(AnimatedEntity):
         return None
     
     def take_damage(self, amount):
-        self.health -= amount
-        if self.health < 0:
-            self.health = 0
+        if self.invincible_timer <= 0:
+            self.health -= amount
+            self.invincible_timer = self.invincible_duration
+            if self.health < 0:
+                self.health = 0

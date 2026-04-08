@@ -50,11 +50,10 @@ class Boss(AnimatedEntity):
             
             if self.rect.colliderect(player.rect) and self.attack_cooldown == 0:
                 self.attack_cooldown = self.attack_delay
-                player.take_damage(2)
+                player.take_damage(1.5)
                 self.knockback_timer = 10
                 self.knockback_direction = -self.direction
         
-        # Призыв миньонов
         if current_time - self.spawn_timer > self.spawn_interval:
             self.spawn_timer = current_time
             offset = -50 if self.direction > 0 else 50
