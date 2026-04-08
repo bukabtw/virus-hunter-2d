@@ -174,7 +174,6 @@ class Game:
                     enemy.knockback_direction = -enemy.direction if enemy.direction else -1
 
     def _check_level_transition(self, current_time):
-        # Проверка выхода
         if self.level_data.get('exit'):
             exit_rect = pygame.Rect(*self.level_data['exit'], 50, 50)
             if self.player.rect.colliderect(exit_rect):
@@ -203,7 +202,9 @@ class Game:
         self.player.camera_y = self.camera.camera.y
 
         if self.background:
-            self.screen.blit(self.background, (0, 0))
+            bg_x = (self.camera.camera.x // 2) % SCREEN_WIDTH
+            self.screen.blit(self.background, (bg_x, 0))
+            self.screen.blit(self.background, (bg_x - SCREEN_WIDTH, 0))
         else:
             self.screen.fill(COLORS['DARK_GREEN'])
         
