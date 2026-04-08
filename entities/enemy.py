@@ -1,69 +1,28 @@
 import pygame
-from settings import (
-    COLORS, SPRITE_WIDTH, SPRITE_HEIGHT, SPRITE_SCALE,
-    SPRITES_PATH, ENEMY_SPRITESHEET, ENEMY_ANIMATIONS,
-    MAP_WIDTH, MAP_HEIGHT
-)
+from settings import *
+from core.animated_entity import AnimatedEntity
 
-try:
-    from core.sprite_sheet import SpriteSheet
-except ImportError:
-    class SpriteSheet:
-        def __init__(self, *args, **kwargs): pass
-        def get_row_frames(self, *args, **kwargs): return []
-
-
-class Enemy(pygame.sprite.Sprite):
+class Enemy(AnimatedEntity):
     def __init__(self, x, y, speed=1.5):
-        super().__init__()
-
-        self.facing_right = True
-        self.current_frame = 0
-        self.animation_timer = 0
-        self.animation_speed = 8
-
-        self.idle_frames = []
-        self.walk_right_frames = []
-        self.walk_left_frames = []
-        self.attack_left_frames = []
-        self.attack_right_frames = []
-
-        self.state = 'idle'
-
-        try:
-            sprite_path = f"{SPRITES_PATH}/{ENEMY_SPRITESHEET}"
-            sheet = SpriteSheet(sprite_path, SPRITE_WIDTH, SPRITE_HEIGHT, SPRITE_SCALE)
-
-            self.idle_frames = sheet.get_row_frames(ENEMY_ANIMATIONS['idle'][0], ENEMY_ANIMATIONS['idle'][1])
-            self.walk_right_frames = sheet.get_row_frames(ENEMY_ANIMATIONS['walk_right'][0], ENEMY_ANIMATIONS['walk_right'][1])
-            self.walk_left_frames = sheet.get_row_frames(ENEMY_ANIMATIONS['walk_left'][0], ENEMY_ANIMATIONS['walk_left'][1])
-            self.attack_left_frames = sheet.get_row_frames(ENEMY_ANIMATIONS['attack_left'][0], ENEMY_ANIMATIONS['attack_left'][1])
-            self.attack_right_frames = sheet.get_row_frames(ENEMY_ANIMATIONS['attack_right'][0], ENEMY_ANIMATIONS['attack_right'][1])
-
-            if self.idle_frames:
-                self.image = self.idle_frames[0]
-            else:
-                self.image = self._make_fallback()
-        except Exception as e:
-            self.image = self._make_fallback()
-
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
+        animations = {
+            'idle': ENEMY_ANIMATIONS['idle'],
+            'walk_right': ENEMY_ANIMATIONS['walk_right'],
+            'walk_left': ENEMY_ANIMATIONS['walk_left'],
+            'attack_left': ENEMY_ANIMATIONS['attack_left'],
+            'attack_right': ENEMY_ANIMATIONS['attack_right'],
+        }
+        
+        sprite_path = f"{SPRITES_PATH}/{ENEMY_SPRITESHEET}"
+        super().__init__(x, y, sprite_path, SPRITE_WIDTH, SPRITE_HEIGHT, SPRITE_SCALE, animations)
+        
         self.speed = speed
         self.health = 10
-        
+        self.direction = 1
         self.attack_timer = 0
         self.attack_delay = 40
         self.knockback_timer = 0
         self.knockback_direction = 0
-
-    def _make_fallback(self):
-        size = (SPRITE_WIDTH * SPRITE_SCALE, SPRITE_HEIGHT * SPRITE_SCALE)
-        surf = pygame.Surface(size)
-        surf.fill(COLORS['RED'])
-        return surf
-
+    
     def update(self, platforms, current_time, enemies, all_sprites, player):
         if self.attack_timer > 0:
             self.attack_timer -= 1
@@ -98,30 +57,8 @@ class Enemy(pygame.sprite.Sprite):
         else:
             self.state = 'walk_right' if self.direction > 0 else 'walk_left'
         
-        self._update_animation()
-
-    def _update_animation(self):
-        self.animation_timer += 1
-        if self.animation_timer >= self.animation_speed:
-            self.animation_timer = 0
-            frames = self._get_current_frames()
-            if frames:
-                self.current_frame = (self.current_frame + 1) % len(frames)
-                self.image = frames[self.current_frame]
-
-    def _get_current_frames(self):
-        if self.state == 'idle':
-            return self.idle_frames if self.idle_frames else [self.image]
-        elif self.state == 'walk_right':
-            return self.walk_right_frames if self.walk_right_frames else [self.image]
-        elif self.state == 'walk_left':
-            return self.walk_left_frames if self.walk_left_frames else [self.image]
-        elif self.state == 'attack_left':
-            return self.attack_left_frames if self.attack_left_frames else [self.image]
-        elif self.state == 'attack_right':
-            return self.attack_right_frames if self.attack_right_frames else [self.image]
-        return [self.image]
-
+        self.update_animation()
+    
     def take_damage(self, amount):
         self.health -= amount
         if self.health <= 0:

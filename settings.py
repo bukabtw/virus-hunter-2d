@@ -18,6 +18,7 @@ COLORS = {
     'PURPLE': (128,0,128),
     'GRAY': (128,128,128),
     'CYAN': (50,255,255),
+    'ORANGE': (255,165,0),
 }
 
 BASE_PATH = os.path.dirname(__file__)

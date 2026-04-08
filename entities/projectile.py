@@ -1,47 +1,28 @@
 import pygame
 import os
-from settings import (
-    COLORS, SPRITE_WIDTH, SPRITE_HEIGHT, SPRITE_SCALE,
-    SPRITES_PATH, PROJECTILE_SPRITESHEET, PROJECTILE_ANIMATIONS,
-    MAP_WIDTH, MAP_HEIGHT
-)
+from settings import *
+from core.animated_entity import AnimatedEntity
 
-try:
-    from core.sprite_sheet import SpriteSheet
-except ImportError:
-    class SpriteSheet:
-        def __init__(self, *args, **kwargs): pass
-        def get_row_frames(self, *args, **kwargs): return []
-
-
-class Projectile(pygame.sprite.Sprite):
+class Projectile(AnimatedEntity):
     def __init__(self, x, y, target_x, target_y, owner):
-        super().__init__()
-
+        animations = {
+            'fly': PROJECTILE_ANIMATIONS['fly'],
+        }
+        
+        sprite_path = f"{SPRITES_PATH}/{PROJECTILE_SPRITESHEET}"
+        
+        super().__init__(x, y, sprite_path, 32, 32, SPRITE_SCALE, animations)
+        
+        if self.frames.get('fly'):
+            self.image = self.frames['fly'][0]
         self.owner = owner
-        self.current_frame = 0
-        self.animation_timer = 0
-        self.animation_speed = 10
         self.has_hit = False
         self.damage = 5
         self.state = 'fly'
         self.start_x = x
         self.start_y = y
         self.max_distance = 600
-        self.fly_frames = []
-
-        try:
-            sprite_path = f"{SPRITES_PATH}/{PROJECTILE_SPRITESHEET}"
-            sheet = SpriteSheet(sprite_path, 32, 32, SPRITE_SCALE)
-            self.fly_frames = sheet.frames[:12]
-            if self.fly_frames:
-                self.image = self.fly_frames[0]
-            else:
-                self.image = self._make_fallback()
-        except Exception as e:
-            self.image = self._make_fallback()
-
-        self.rect = self.image.get_rect()
+        
         self.rect.center = (x, y)
         
         dx = target_x - x
@@ -51,14 +32,14 @@ class Projectile(pygame.sprite.Sprite):
         self.vy = dy / dist * 15
         
         self.facing_right = self.vx > 0
-
+    
     def _make_fallback(self):
         size = (32, 32)
         surf = pygame.Surface(size)
         surf.fill(COLORS['YELLOW'])
-        pygame.draw.circle(surf, COLORS['ORANGE'], (16, 16), 12)
+        pygame.draw.circle(surf, COLORS.get('ORANGE', (255, 100, 0)), (16, 16), 12)
         return surf
-
+    
     def update(self, player):
         if self.state == 'fly':
             self.rect.x += self.vx
@@ -84,29 +65,19 @@ class Projectile(pygame.sprite.Sprite):
                 self.rect.y += 5
             elif self.rect.centery > player.rect.centery:
                 self.rect.y -= 5
-            
+
             if (abs(self.rect.centerx - player.rect.centerx) < 40 and 
                 abs(self.rect.centery - player.rect.centery) < 40):
                 if hasattr(self.owner, 'phone_in_air'):
                     self.owner.phone_in_air = False
                 self.kill()
-        
-        self._update_animation()
 
+        self.update_animation()
+    
     def hit(self):
         if not self.has_hit:
             self.has_hit = True
             self.state = 'return'
-
-    def _update_animation(self):
-        self.animation_timer += 1
-        if self.animation_timer >= self.animation_speed:
-            self.animation_timer = 0
-            if self.fly_frames:
-                self.current_frame = (self.current_frame + 1) % len(self.fly_frames)
-                self.image = self.fly_frames[self.current_frame]
-                if not self.facing_right:
-                    self.image = pygame.transform.flip(self.image, True, False)
-
+    
     def take_damage(self, amount):
         pass
