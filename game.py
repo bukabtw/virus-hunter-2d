@@ -239,17 +239,6 @@ class Game:
             else:
                 self.screen.blit(sprite.image, self.camera.apply(sprite))
         
-        # Отрисовка коллизии для отладки
-        if self.debug_mode:
-            if hasattr(self.player, 'collision_rect'):
-                col_rect = self.camera.apply_rect(self.player.collision_rect)
-                pygame.draw.rect(self.screen, COLORS['BLUE'], col_rect, 2)
-            for enemy in self.enemies:
-                if hasattr(enemy, 'collision_rect'):
-                    col_rect = self.camera.apply_rect(enemy.collision_rect)
-                    pygame.draw.rect(self.screen, COLORS['GREEN'], col_rect, 2)
-        
-        # Полоска здоровья босса
         if self.boss and self.boss.alive():
             self.boss.draw_health_bar(self.screen, self.camera)
         
