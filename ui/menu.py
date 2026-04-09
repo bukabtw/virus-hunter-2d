@@ -154,6 +154,8 @@ class Menu:
         )
         self.sliders = [music_slider, sfx_slider]
         
+        clock = pygame.time.Clock()
+        
         while self.settings_running:
             if self.background_image:
                 bg_scaled = pygame.transform.scale(self.background_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -205,13 +207,13 @@ class Menu:
                     self.difficulty = (self.difficulty % 3) + 1
                 elif back_rect.collidepoint(mouse_pos):
                     self.settings_running = False
-            pygame.time.wait(100)
+            
+            clock.tick(60)
 
     def start(self):
         self.game.sound_manager.stop_music()
-        self.running = False
         self.game.difficulty = self.difficulty
-        self.game.start_level(difficulty=self.difficulty)
+        self.running = False
 
     def quit(self):
         pygame.quit()
@@ -219,6 +221,8 @@ class Menu:
 
     def run(self):
         self.game.sound_manager.play_music('menu')
+        clock = pygame.time.Clock()
+        
         while self.running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -241,4 +245,7 @@ class Menu:
             
             for btn in self.buttons:
                 btn.draw(self.screen, self.font)
+            
             pygame.display.flip()
+            clock.tick(60)
+        

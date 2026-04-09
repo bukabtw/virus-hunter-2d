@@ -76,7 +76,11 @@ class Game:
             self._handle_events()
             self._update(dt)
             self._draw()
-        self._cleanup()
+        
+        if self.state == GameState.GAME_OVER:
+            return
+        elif self.state == GameState.PLAYING:
+            self._cleanup()
 
     def _init_level(self):
         self.sound_manager.play_music(f"level_{self.level_num}")
@@ -128,8 +132,7 @@ class Game:
                 if event.key == pygame.K_ESCAPE:
                     if self.state == GameState.PLAYING:
                         self.state = GameState.PAUSED
-                    elif self.state == GameState.PAUSED:
-                        self.state = GameState.PLAYING
+                        self.show_pause_menu()  
                     
             if event.type == pygame.KEYUP:
                 keys = pygame.key.get_pressed()
@@ -246,15 +249,6 @@ class Game:
             exit_rect = pygame.Rect(*self.level_data['exit'], 50, 50)
             pygame.draw.rect(self.screen, COLORS['YELLOW'], self.camera.apply_rect(exit_rect))
         self._draw_hud()
-        if self.state == GameState.PAUSED:
-            overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-            overlay.set_alpha(180)
-            overlay.fill(COLORS['BLACK'])
-            self.screen.blit(overlay, (0, 0))
-            pause_text = self.font.render("ПАУЗА", True, COLORS['WHITE'])
-            self.screen.blit(pause_text, (SCREEN_WIDTH//2 - pause_text.get_width()//2, SCREEN_HEIGHT//2 - 50))
-            hint_text = self.font.render("Нажмите ESC для продолжения", True, COLORS['YELLOW'])
-            self.screen.blit(hint_text, (SCREEN_WIDTH//2 - hint_text.get_width()//2, SCREEN_HEIGHT//2 + 20))
         pygame.display.flip()
 
     def _draw_hud(self):
@@ -267,51 +261,250 @@ class Game:
         self.sound_manager.stop_music()
 
     def show_pause_menu(self):
+        from ui.menu import Button
+        import sys
+        
         overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-        overlay.set_alpha(180)
+        overlay.set_alpha(200)
         overlay.fill(COLORS['BLACK'])
-        self.screen.blit(overlay, (0, 0))
+        
         font = pygame.font.Font(None, 48)
         font_small = pygame.font.Font(None, 36)
-        title = font.render("ПАУЗА", True, COLORS['PURPLE'])
-        self.screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, SCREEN_HEIGHT//2 - 150))
-        btn_y = SCREEN_HEIGHT//2 - 50
-        btn_w = 300
-        btn_h = 50
-        mouse = pygame.mouse.get_pos()
-        click = False
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                click = True
-        resume_rect = pygame.Rect(SCREEN_WIDTH//2 - btn_w//2, btn_y, btn_w, btn_h)
-        menu_rect = pygame.Rect(SCREEN_WIDTH//2 - btn_w//2, btn_y + 70, btn_w, btn_h)
-        quit_rect = pygame.Rect(SCREEN_WIDTH//2 - btn_w//2, btn_y + 140, btn_w, btn_h)
-        resume_color = COLORS['PURPLE'] if resume_rect.collidepoint(mouse) else (84, 2, 84)
-        menu_color = COLORS['PURPLE'] if menu_rect.collidepoint(mouse) else (84, 2, 84)
-        quit_color = COLORS['PURPLE'] if quit_rect.collidepoint(mouse) else (84, 2, 84)
-        pygame.draw.rect(self.screen, resume_color, resume_rect, border_radius=10)
-        pygame.draw.rect(self.screen, menu_color, menu_rect, border_radius=10)
-        pygame.draw.rect(self.screen, quit_color, quit_rect, border_radius=10)
-        resume_text = font_small.render("Продолжить", True, COLORS['WHITE'])
-        menu_text = font_small.render("Выйти в меню", True, COLORS['WHITE'])
-        quit_text = font_small.render("Выйти из игры", True, COLORS['WHITE'])
-        self.screen.blit(resume_text, resume_text.get_rect(center=resume_rect.center))
-        self.screen.blit(menu_text, menu_text.get_rect(center=menu_rect.center))
-        self.screen.blit(quit_text, quit_text.get_rect(center=quit_rect.center))
-        pygame.display.flip()
-        if click:
-            if resume_rect.collidepoint(mouse):
-                self.state = GameState.PLAYING
-            elif menu_rect.collidepoint(mouse):
-                self.state = GameState.MENU
-                self.sound_manager.stop_music()
-            elif quit_rect.collidepoint(mouse):
-                pygame.quit()
-                sys.exit()
-        pygame.time.wait(100)
+        title_font = pygame.font.Font(None, 64)
+        
+        button_width = 300
+        button_height = 60
+        center_x = SCREEN_WIDTH // 2
+        start_y = SCREEN_HEIGHT // 2 - 80
+        
+        buttons = []
+        
+        def resume_action():
+            self.state = GameState.PLAYING
+        
+        def restart_action():
+            self.running = False
+            self.state = GameState.PLAYING
+        
+        def settings_action():
+            self.show_settings_menu()
+        
+        def menu_action():
+            self.running = False
+            self.state = GameState.MENU
+            self.sound_manager.stop_music()
+        
+        buttons.append(Button(
+            center_x - button_width // 2, start_y,
+            button_width, button_height,
+            "ПРОДОЛЖИТЬ",
+            COLORS['PURPLE'], (84, 2, 84),
+            resume_action
+        ))
+        
+        buttons.append(Button(
+            center_x - button_width // 2, start_y + 80,
+            button_width, button_height,
+            "ЗАНОВО",
+            COLORS['PURPLE'], (84, 2, 84),
+            restart_action
+        ))
+        
+        buttons.append(Button(
+            center_x - button_width // 2, start_y + 160,
+            button_width, button_height,
+            "НАСТРОЙКИ",
+            COLORS['PURPLE'], (84, 2, 84),
+            settings_action
+        ))
+        
+        buttons.append(Button(
+            center_x - button_width // 2, start_y + 240,
+            button_width, button_height,
+            "ГЛАВНОЕ МЕНЮ",
+            COLORS['PURPLE'], (84, 2, 84),
+            menu_action
+        ))
+        
+        paused = True
+        clock = pygame.time.Clock()
+        
+        while paused and self.state == GameState.PAUSED:
+
+            if self.background:
+                if self.background.get_size() != (SCREEN_WIDTH, SCREEN_HEIGHT):
+                    self.background = pygame.transform.scale(self.background, (SCREEN_WIDTH, SCREEN_HEIGHT))
+                self.screen.blit(self.background, (0, 0))
+            else:
+                self.screen.fill(COLORS['DARK_GREEN'])
+            
+            for p in self.platforms:
+                if hasattr(p, 'image') and p.image:
+                    self.screen.blit(p.image, self.camera.apply(p))
+                else:
+                    pygame.draw.rect(self.screen, COLORS['GREEN'], self.camera.apply_rect(p))
+            
+            for sprite in self.all_sprites:
+                flash_color = None
+                if hasattr(sprite, 'get_damage_color'):
+                    flash_color = sprite.get_damage_color()
+                if flash_color:
+                    colored_image = sprite.image.copy()
+                    colored_image.fill(flash_color, special_flags=pygame.BLEND_RGB_MULT)
+                    self.screen.blit(colored_image, self.camera.apply(sprite))
+                else:
+                    self.screen.blit(sprite.image, self.camera.apply(sprite))
+
+            if self.boss and self.boss.alive():
+                self.boss.draw_health_bar(self.screen, self.camera)
+
+            if self.level_data.get('exit'):
+                exit_rect = pygame.Rect(*self.level_data['exit'], 50, 50)
+                pygame.draw.rect(self.screen, COLORS['YELLOW'], self.camera.apply_rect(exit_rect))
+            
+            self._draw_hud()
+            
+            self.screen.blit(overlay, (0, 0))
+            
+            title = title_font.render("ПАУЗА", True, COLORS['WHITE'])
+            title_shadow = title_font.render("ПАУЗА", True, COLORS['PURPLE'])
+            self.screen.blit(title_shadow, (center_x - title.get_width()//2 + 3, start_y - 100 + 3))
+            self.screen.blit(title, (center_x - title.get_width()//2, start_y - 100))
+            
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.state = GameState.PLAYING
+                        paused = False
+
+                for btn in buttons:
+                    btn.handle(event)
+
+            for btn in buttons:
+                btn.draw(self.screen, font_small)
+            
+            hint = font_small.render("Нажмите ESC для продолжения", True, COLORS['GRAY'])
+            self.screen.blit(hint, (center_x - hint.get_width()//2, SCREEN_HEIGHT - 50))
+            
+            pygame.display.flip()
+            clock.tick(FPS)
+            
+            if self.state != GameState.PAUSED:
+                paused = False
+
+    def show_settings_menu(self):
+        from ui.menu import Slider
+        import sys
+        
+        overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+        overlay.set_alpha(220)
+        overlay.fill(COLORS['BLACK'])
+        
+        font = pygame.font.Font(None, 48)
+        font_small = pygame.font.Font(None, 36)
+        
+        center_x = SCREEN_WIDTH // 2
+        start_y = SCREEN_HEIGHT // 2 - 100
+        
+        sliders = []
+        
+        music_slider = Slider(
+            center_x - 150, start_y + 50, 300, 12,
+            0.0, 1.0, self.sound_manager.music_volume, "МУЗЫКА",
+            COLORS['GRAY'], COLORS['PURPLE']
+        )
+        
+        sfx_slider = Slider(
+            center_x - 150, start_y + 120, 300, 12,
+            0.0, 1.0, self.sound_manager.sfx_volume, "ЭФФЕКТЫ",
+            COLORS['GRAY'], COLORS['PURPLE']
+        )
+        
+        sliders = [music_slider, sfx_slider]
+        
+        back_button_rect = pygame.Rect(center_x - 150, start_y + 200, 300, 50)
+        
+        settings_running = True
+        clock = pygame.time.Clock()
+        
+        while settings_running:
+            if self.background:
+                if self.background.get_size() != (SCREEN_WIDTH, SCREEN_HEIGHT):
+                    self.background = pygame.transform.scale(self.background, (SCREEN_WIDTH, SCREEN_HEIGHT))
+                self.screen.blit(self.background, (0, 0))
+            else:
+                self.screen.fill(COLORS['DARK_GREEN'])
+            
+            for p in self.platforms:
+                if hasattr(p, 'image') and p.image:
+                    self.screen.blit(p.image, self.camera.apply(p))
+                else:
+                    pygame.draw.rect(self.screen, COLORS['GREEN'], self.camera.apply_rect(p))
+            
+            for sprite in self.all_sprites:
+                flash_color = None
+                if hasattr(sprite, 'get_damage_color'):
+                    flash_color = sprite.get_damage_color()
+                if flash_color:
+                    colored_image = sprite.image.copy()
+                    colored_image.fill(flash_color, special_flags=pygame.BLEND_RGB_MULT)
+                    self.screen.blit(colored_image, self.camera.apply(sprite))
+                else:
+                    self.screen.blit(sprite.image, self.camera.apply(sprite))
+            
+            if self.boss and self.boss.alive():
+                self.boss.draw_health_bar(self.screen, self.camera)
+            
+            if self.level_data.get('exit'):
+                exit_rect = pygame.Rect(*self.level_data['exit'], 50, 50)
+                pygame.draw.rect(self.screen, COLORS['YELLOW'], self.camera.apply_rect(exit_rect))
+            
+            self._draw_hud()
+            
+            self.screen.blit(overlay, (0, 0))
+            
+            title = font.render("НАСТРОЙКИ", True, COLORS['WHITE'])
+            self.screen.blit(title, (center_x - title.get_width()//2, start_y - 30))
+            
+            mouse_pos = pygame.mouse.get_pos()
+            click = False
+            
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        settings_running = False
+                
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    click = True
+                
+                for slider in sliders:
+                    if slider.handle(event):
+                        if slider.label == "МУЗЫКА":
+                            self.sound_manager.set_music_volume(slider.value)
+                        else:
+                            self.sound_manager.set_volume(slider.value)
+
+            for slider in sliders:
+                slider.draw(self.screen, font_small)
+
+            back_color = COLORS['PURPLE'] if back_button_rect.collidepoint(mouse_pos) else (84, 2, 84)
+            pygame.draw.rect(self.screen, back_color, back_button_rect, border_radius=10)
+            back_text = font_small.render("НАЗАД", True, COLORS['WHITE'])
+            self.screen.blit(back_text, back_text.get_rect(center=back_button_rect.center))
+            
+            if click and back_button_rect.collidepoint(mouse_pos):
+                settings_running = False
+            
+            pygame.display.flip()
+            clock.tick(FPS)
 
     def show_victory_screen(self):
         self.sound_manager.stop_music()
@@ -339,10 +532,10 @@ class Game:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_r:
                         self.start_level(level_num=1, difficulty=self.difficulty)
-                        return
+                        waiting = False
                     if event.key == pygame.K_m:
                         self.state = GameState.MENU
-                        return
+                        waiting = False
     
     def show_game_over_screen(self):
         self.sound_manager.stop_music()
@@ -366,24 +559,41 @@ class Game:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_r:
                         self.start_level(level_num=1, difficulty=self.difficulty)
-                        return
+                        waiting = False
                     if event.key == pygame.K_m:
                         self.state = GameState.MENU
-                        return
+                        waiting = False
     
     def run(self):
         from ui.menu import Menu
         while True:
+            print(f"Текущее состояние: {self.state}")
+            
             if self.state == GameState.MENU:
                 menu = Menu(self)
                 menu.run()
-                self.state = GameState.PLAYING
-                self.start_level(level_num=1, difficulty=self.difficulty)
+                if not menu.running:
+                    self.state = GameState.PLAYING
+                    self.start_level(level_num=1, difficulty=self.difficulty)
+                else:
+                    continue
             elif self.state == GameState.PLAYING:
                 pass
             elif self.state == GameState.PAUSED:
-                self.show_pause_menu()
+                pass
             elif self.state == GameState.GAME_OVER:
+                print("Показываем Game Over экран")
                 self.show_game_over_screen()
+                if self.state == GameState.MENU:
+                    continue
+                elif self.state == GameState.PLAYING:
+                    self.start_level(level_num=1, difficulty=self.difficulty)
             elif self.state == GameState.VICTORY:
+                print("Показываем Victory экран")
                 self.show_victory_screen()
+                if self.state == GameState.MENU:
+                    continue
+                elif self.state == GameState.PLAYING:
+                    self.start_level(level_num=1, difficulty=self.difficulty)
+            
+            pygame.time.wait(50)
