@@ -11,6 +11,7 @@ from levels.level_loader import LevelLoader
 from core.camera import Camera
 from core.game_state import GameState 
 from core.sound_manager import SoundManager
+from random import random
 
 class Game:
     def __init__(self):
@@ -219,6 +220,7 @@ class Game:
         if self.player.health <= 0:
             self.running = False
             self.state = GameState.GAME_OVER
+            self.game_over_reason = "death"
             return
 
     def _next_level(self):
@@ -290,34 +292,71 @@ class Game:
     def show_victory_screen(self):
         self.sound_manager.stop_music()
         self.sound_manager.play_victory()
-            
-        self.screen.fill(COLORS['BLACK'])
-        title = self.font.render("ПОБЕДА!", True, COLORS['GREEN'])
-        subtitle = self.font.render("Вы победили финального босса!", True, COLORS['WHITE'])
-        self.screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, SCREEN_HEIGHT//2 - 50))
-        self.screen.blit(subtitle, (SCREEN_WIDTH//2 - subtitle.get_width()//2, SCREEN_HEIGHT//2))
-        pygame.display.flip()
-        pygame.time.delay(3000)
-    
-    def show_game_over_screen(self):
-        self.sound_manager.stop_music()
-        self.sound_manager.play_game_over()
-            
-        self.screen.fill(COLORS['BLACK'])
-        title = self.font.render("ИГРА ОКОНЧЕНА", True, COLORS['RED'])
-        subtitle = self.font.render("Нажмите любую клавишу...", True, COLORS['WHITE'])
-        self.screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, SCREEN_HEIGHT//2 - 50))
-        self.screen.blit(subtitle, (SCREEN_WIDTH//2 - subtitle.get_width()//2, SCREEN_HEIGHT//2))
-        pygame.display.flip()
         
         waiting = True
         while waiting:
+            self.screen.fill(COLORS['BLACK'])
+            
+            for _ in range(50):
+                x = random.randint(0, SCREEN_WIDTH)
+                y = random.randint(0, SCREEN_HEIGHT)
+                pygame.draw.circle(self.screen, COLORS['YELLOW'], (x, y), 2)
+            
+            title = self.font.render("ПОБЕДА!", True, COLORS['GREEN'])
+            subtitle = self.font.render("Вы спасли мир от вирусов!", True, COLORS['WHITE'])
+            restart_text = self.font.render("R - Играть заново", True, COLORS['GREEN'])
+            menu_text = self.font.render("M - Выйти в меню", True, COLORS['YELLOW'])
+            
+            self.screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, SCREEN_HEIGHT//2 - 100))
+            self.screen.blit(subtitle, (SCREEN_WIDTH//2 - subtitle.get_width()//2, SCREEN_HEIGHT//2 - 40))
+            self.screen.blit(restart_text, (SCREEN_WIDTH//2 - restart_text.get_width()//2, SCREEN_HEIGHT//2 + 20))
+            self.screen.blit(menu_text, (SCREEN_WIDTH//2 - menu_text.get_width()//2, SCREEN_HEIGHT//2 + 60))
+            
+            pygame.display.flip()
+            
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
                 if event.type == pygame.KEYDOWN:
-                    waiting = False
+                    if event.key == pygame.K_r:
+                        self.start_level(level_num=1, difficulty=self.difficulty)
+                        return
+                    if event.key == pygame.K_m:
+                        self.state = GameState.MENU
+                        return
+    
+    def show_game_over_screen(self):
+        self.sound_manager.stop_music()
+        self.sound_manager.play_game_over()
+        
+        waiting = True
+        while waiting:
+            self.screen.fill(COLORS['BLACK'])
+            
+            title = self.font.render("GAME OVER", True, COLORS['RED'])
+            subtitle = self.font.render("Вы проиграли...", True, COLORS['WHITE'])
+            restart_text = self.font.render("R - Начать заново", True, COLORS['GREEN'])
+            menu_text = self.font.render("M - Выйти в меню", True, COLORS['YELLOW'])
+            
+            self.screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, SCREEN_HEIGHT//2 - 100))
+            self.screen.blit(subtitle, (SCREEN_WIDTH//2 - subtitle.get_width()//2, SCREEN_HEIGHT//2 - 40))
+            self.screen.blit(restart_text, (SCREEN_WIDTH//2 - restart_text.get_width()//2, SCREEN_HEIGHT//2 + 20))
+            self.screen.blit(menu_text, (SCREEN_WIDTH//2 - menu_text.get_width()//2, SCREEN_HEIGHT//2 + 60))
+            
+            pygame.display.flip()
+            
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_r:
+                        self.start_level(level_num=1, difficulty=self.difficulty)
+                        return
+                    if event.key == pygame.K_m:
+                        self.state = GameState.MENU
+                        return
     
     def run(self):
         from ui.menu import Menu
@@ -337,8 +376,6 @@ class Game:
             
             elif self.state == GameState.GAME_OVER:
                 self.show_game_over_screen()
-                self.state = GameState.MENU
             
             elif self.state == GameState.VICTORY:
                 self.show_victory_screen()
-                self.state = GameState.MENU

@@ -58,9 +58,9 @@ class Menu:
         button_width = BUTTON_WIDTH
         button_height = BUTTON_HEIGHT
         self.buttons = [
-            Button(cx - button_width//2, start_y, button_width, button_height, "Старт", COLORS['PURPLE'], (0,150,0), self.start),
-            Button(cx - button_width//2, start_y + spacing, button_width, button_height, "Настройки", COLORS['PURPLE'], (100,100,100), self.settings),
-            Button(cx - button_width//2, start_y + 2 * spacing, button_width, button_height, "Выход", COLORS['PURPLE'], (150,0,0), self.quit)
+            Button(cx - button_width//2, start_y, button_width, button_height, "Старт", COLORS['PURPLE'], (84,2,84), self.start),
+            Button(cx - button_width//2, start_y + spacing, button_width, button_height, "Настройки", COLORS['PURPLE'], (84,2,84), self.settings),
+            Button(cx - button_width//2, start_y + 2 * spacing, button_width, button_height, "Выход", COLORS['PURPLE'], (84,2,84), self.quit)
         ]
         
     def settings(self):
