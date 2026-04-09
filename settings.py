@@ -8,7 +8,7 @@ SCREEN_WIDTH = user32.GetSystemMetrics(0)
 SCREEN_HEIGHT = user32.GetSystemMetrics(1)
 
 FPS = 60
-MAP_WIDTH = 8000
+MAP_WIDTH = 20000
 MAP_HEIGHT = 5000
 
 COLORS = {
@@ -73,15 +73,46 @@ SPRITE_WIDTH = 64
 SPRITE_HEIGHT = 64
 SPRITE_SCALE = 2
 
-TILE_CONFIG = {
-    1: {'default_type': 'ram', 'tile_scale': (1, 1)},
-    2: {'default_type': 'hdd', 'tile_scale': (1, 1)},
-    3: {'default_type': 'avast', 'tile_scale': (1, 1)},
-}
-
 RAM_TILE_SIZE = (64, 32)
 HDD_TILE_SIZE = (48, 64)
 AVAST_TILE_SIZE = (64, 64)
+
+PLATFORM_SCALE = 2
+
+RAM_TILE_SIZE_SCALED = (RAM_TILE_SIZE[0] * PLATFORM_SCALE, RAM_TILE_SIZE[1] * PLATFORM_SCALE)
+HDD_TILE_SIZE_SCALED = (HDD_TILE_SIZE[0] * PLATFORM_SCALE, HDD_TILE_SIZE[1] * PLATFORM_SCALE)
+AVAST_TILE_SIZE_SCALED = (AVAST_TILE_SIZE[0] * PLATFORM_SCALE, AVAST_TILE_SIZE[1] * PLATFORM_SCALE)
+
+TILE_CONFIG = {
+    1: {
+        'default_type': 'ram', 
+        'tile_size': RAM_TILE_SIZE_SCALED,
+        'base_size': RAM_TILE_SIZE
+    },
+    2: {
+        'default_type': 'hdd', 
+        'tile_size': HDD_TILE_SIZE_SCALED,
+        'base_size': HDD_TILE_SIZE
+    },
+    3: {
+        'default_type': 'avast', 
+        'tile_size': AVAST_TILE_SIZE_SCALED,
+        'base_size': AVAST_TILE_SIZE
+    },
+}
+
+PLATFORM_SIZES = {
+    'ram': RAM_TILE_SIZE_SCALED,
+    'hdd': HDD_TILE_SIZE_SCALED,
+    'avast': AVAST_TILE_SIZE_SCALED,
+}
+
+
+DIFFICULTY = {
+    1: {'name': 'Лёгкий', 'enemy_speed': 1.5, 'player_health': 5},
+    2: {'name': 'Средний', 'enemy_speed': 2.5, 'player_health': 3},
+    3: {'name': 'Сложный', 'enemy_speed': 3.5, 'player_health': 1},
+}
 
 DIFFICULTY = {
     1: {'name': 'Лёгкий', 'enemy_speed': 1.5, 'player_health': 5},

@@ -20,7 +20,7 @@ class Player(AnimatedEntity, Damageable):
         sprite_path = f"{SPRITES_PATH}/{PLAYER_SPRITESHEET}"
         super().__init__(x, y, sprite_path, SPRITE_WIDTH, SPRITE_HEIGHT, SPRITE_SCALE, animations)
         
-        Damageable.__init__(self, max_health=5, invincible_duration=60)
+        Damageable.__init__(self, max_health=500, invincible_duration=60)
         
         COLLIDE_W = 50
         COLLIDE_H = 95
@@ -40,8 +40,8 @@ class Player(AnimatedEntity, Damageable):
         self.visual_rect = self.rect.copy()
         self.vel_x = 0
         self.vel_y = 0
-        self.speed = 5
-        self.jump_power = -20
+        self.speed = 6 
+        self.jump_power = -22
         self.gravity = 0.8
         self.on_ground = True
         

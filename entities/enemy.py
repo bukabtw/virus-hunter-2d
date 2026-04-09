@@ -55,12 +55,33 @@ class Enemy(AnimatedEntity, Damageable):
         self.knockback_direction = 0
         self.patrol_timer = 0
         self.patrol_direction = self.direction
-        self.jump_timer = 0
         
         self.vel_x = 0
         self.vel_y = 0
         self.gravity = 0.8
         self.frozen = False
+        self.on_ground = False
+    
+    def check_ground_below(self, platforms):
+        """Проверяет, есть ли земля под врагом"""
+        test_rect = self.collision_rect.copy()
+        test_rect.y += 5
+        test_rect.x += self.direction * 10
+        
+        for p in platforms:
+            if test_rect.colliderect(p.rect):
+                return True
+        return False
+    
+    def check_wall_ahead(self, platforms):
+        """Проверяет, есть ли стена впереди"""
+        test_rect = self.collision_rect.copy()
+        test_rect.x += self.direction * 10
+        
+        for p in platforms:
+            if test_rect.colliderect(p.rect):
+                return True
+        return False
     
     def update(self, platforms, current_time, enemies, all_sprites, player):
         self.update_invincibility()
@@ -85,11 +106,13 @@ class Enemy(AnimatedEntity, Damageable):
         self.vel_y += self.gravity
         self.collision_rect.y += self.vel_y
         
+        self.on_ground = False
         for p in platforms:
             if self.collision_rect.colliderect(p.rect):
                 if self.vel_y > 0:
                     self.collision_rect.bottom = p.rect.top
                     self.vel_y = 0
+                    self.on_ground = True
                     break
                 elif self.vel_y < 0:
                     self.collision_rect.top = p.rect.bottom
@@ -99,66 +122,71 @@ class Enemy(AnimatedEntity, Damageable):
         self.visual_rect.x = self.collision_rect.x - self.collide_offset_x
         self.visual_rect.y = self.collision_rect.y - self.collide_offset_y
         
-        if player and player.alive():
-            dx = player.visual_rect.centerx - self.visual_rect.centerx
-            
-            if abs(dx) < 300:
-                if dx > 0:
-                    self.direction = 1
-                    self.facing_right = True
-                elif dx < 0:
-                    self.direction = -1
-                    self.facing_right = False
-                self.collision_rect.x += self.speed * self.direction
+        if self.on_ground:
+            if player and player.alive():
+                dx = player.visual_rect.centerx - self.visual_rect.centerx
+                
+                if abs(dx) < 300:
+                    if dx > 0:
+                        self.direction = 1
+                        self.facing_right = True
+                    else:
+                        self.direction = -1
+                        self.facing_right = False
+                    
+                    if self.check_ground_below(platforms) and not self.check_wall_ahead(platforms):
+                        self.collision_rect.x += self.speed * self.direction
+                    else:
+                        self.direction *= -1
+                        self.facing_right = not self.facing_right
+                else:
+                    self.patrol_timer += 1
+                    if self.patrol_timer > 120:
+                        self.patrol_direction *= -1
+                        self.patrol_timer = 0
+                    self.direction = self.patrol_direction
+                    self.facing_right = self.direction > 0
+
+                    if self.check_ground_below(platforms) and not self.check_wall_ahead(platforms):
+                        self.collision_rect.x += self.speed * self.direction
+                    else:
+                        self.direction *= -1
+                        self.facing_right = not self.facing_right
             else:
-                self.patrol_timer += 1
-                if self.patrol_timer > 120:
-                    self.patrol_direction *= -1
-                    self.patrol_timer = 0
-                self.direction = self.patrol_direction
-                self.facing_right = self.direction > 0
-                self.collision_rect.x += self.speed * self.direction
+                if self.check_ground_below(platforms) and not self.check_wall_ahead(platforms):
+                    self.collision_rect.x += self.speed * self.direction
+                else:
+                    self.direction *= -1
+                    self.facing_right = not self.facing_right
             
             for p in platforms:
                 if self.collision_rect.colliderect(p.rect):
-                    if self.collision_rect.x > p.rect.x:
+                    if self.direction > 0:
                         self.collision_rect.right = p.rect.left
-                    elif self.collision_rect.x < p.rect.x:
+                    else:
                         self.collision_rect.left = p.rect.right
+                    self.direction *= -1
+                    self.facing_right = not self.facing_right
                     break
             
             self.visual_rect.x = self.collision_rect.x - self.collide_offset_x
             self.visual_rect.y = self.collision_rect.y - self.collide_offset_y
             
-            if self.collision_rect.colliderect(player.collision_rect) and self.attack_timer == 0:
-                self.attack_timer = self.attack_delay
-                player.take_damage(2 if self.enemy_type == 'tank' else 1)
-                self.knockback_timer = 10
-                self.knockback_direction = -self.direction
-        else:
-            self.collision_rect.x += self.speed * self.direction
-            for p in platforms:
-                if self.collision_rect.colliderect(p.rect):
-                    if self.collision_rect.x > p.rect.x:
-                        self.collision_rect.right = p.rect.left
-                    elif self.collision_rect.x < p.rect.x:
-                        self.collision_rect.left = p.rect.right
-                    break
-            self.visual_rect.x = self.collision_rect.x - self.collide_offset_x
-            self.visual_rect.y = self.collision_rect.y - self.collide_offset_y
-            if self.visual_rect.left <= 0 or self.visual_rect.right >= MAP_WIDTH:
-                self.direction *= -1
-                self.facing_right = self.direction > 0
+            if player and player.alive():
+                if self.collision_rect.colliderect(player.collision_rect) and self.attack_timer == 0:
+                    self.attack_timer = self.attack_delay
+                    player.take_damage(2 if self.enemy_type == 'tank' else 1)
+                    self.knockback_timer = 10
+                    self.knockback_direction = -self.direction
         
         if self.collision_rect.left < 0:
             self.collision_rect.left = 0
+            self.direction *= -1
+            self.facing_right = not self.facing_right
         if self.collision_rect.right > MAP_WIDTH:
             self.collision_rect.right = MAP_WIDTH
-        if self.collision_rect.top < 0:
-            self.collision_rect.top = 0
-        if self.collision_rect.bottom > MAP_HEIGHT:
-            self.collision_rect.bottom = MAP_HEIGHT
-            self.vel_y = 0
+            self.direction *= -1
+            self.facing_right = not self.facing_right
         
         self.visual_rect.x = self.collision_rect.x - self.collide_offset_x
         self.visual_rect.y = self.collision_rect.y - self.collide_offset_y

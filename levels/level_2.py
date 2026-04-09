@@ -1,68 +1,98 @@
 import pygame
-from settings import MAP_WIDTH, MAP_HEIGHT
+from settings import MAP_WIDTH, MAP_HEIGHT, PLATFORM_SIZES
 
 def get_level():
+    TILE_W, TILE_H = PLATFORM_SIZES['hdd']
+    
     platforms = [
-        pygame.Rect(0, MAP_HEIGHT - 50, 400, 50),
-        pygame.Rect(450, MAP_HEIGHT - 120, 250, 30),
-        pygame.Rect(750, MAP_HEIGHT - 180, 250, 30),
-        pygame.Rect(1050, MAP_HEIGHT - 240, 250, 30),
-        pygame.Rect(1350, MAP_HEIGHT - 300, 250, 30),
+        pygame.Rect(0, MAP_HEIGHT - TILE_H*2, TILE_W*15, TILE_H*2),
         
-        pygame.Rect(1700, MAP_HEIGHT - 350, 200, 30),
-        pygame.Rect(1950, MAP_HEIGHT - 400, 200, 30),
-        pygame.Rect(2200, MAP_HEIGHT - 350, 200, 30),
-        pygame.Rect(2450, MAP_HEIGHT - 450, 200, 30),
-        pygame.Rect(2700, MAP_HEIGHT - 400, 200, 30),
-        pygame.Rect(2950, MAP_HEIGHT - 500, 200, 30),
+        pygame.Rect(TILE_W*15, MAP_HEIGHT - TILE_H*3, TILE_W*3, TILE_H),
         
-        pygame.Rect(3300, MAP_HEIGHT - 550, 150, 30),
-        pygame.Rect(3500, MAP_HEIGHT - 600, 150, 30),
-        pygame.Rect(3700, MAP_HEIGHT - 550, 150, 30),
-        pygame.Rect(3900, MAP_HEIGHT - 650, 150, 30),
-        pygame.Rect(4100, MAP_HEIGHT - 600, 150, 30),
-        pygame.Rect(4300, MAP_HEIGHT - 700, 150, 30),
+        pygame.Rect(TILE_W*16, MAP_HEIGHT - TILE_H*3, TILE_W*4, TILE_H),
+        pygame.Rect(TILE_W*21, MAP_HEIGHT - TILE_H*3, TILE_W*4, TILE_H),
+        pygame.Rect(TILE_W*26, MAP_HEIGHT - TILE_H*4, TILE_W*4, TILE_H),
         
-        pygame.Rect(4600, MAP_HEIGHT - 750, 300, 30),
-        pygame.Rect(4950, MAP_HEIGHT - 750, 300, 30),
-        pygame.Rect(5300, MAP_HEIGHT - 800, 300, 30),
+        pygame.Rect(TILE_W*31, MAP_HEIGHT - TILE_H*4, TILE_W*5, TILE_H),
+        pygame.Rect(TILE_W*37, MAP_HEIGHT - TILE_H*5, TILE_W*4, TILE_H),
+        pygame.Rect(TILE_W*42, MAP_HEIGHT - TILE_H*5, TILE_W*6, TILE_H*2),
         
-        pygame.Rect(1800, MAP_HEIGHT - 500, 100, 20),
-        pygame.Rect(2500, MAP_HEIGHT - 550, 100, 20),
-        pygame.Rect(3200, MAP_HEIGHT - 650, 100, 20),
-        pygame.Rect(3800, MAP_HEIGHT - 750, 100, 20),
-        pygame.Rect(4400, MAP_HEIGHT - 800, 100, 20),
-        pygame.Rect(5000, MAP_HEIGHT - 850, 100, 20),
+        pygame.Rect(TILE_W*48, MAP_HEIGHT - TILE_H*6, TILE_W*4, TILE_H),
+        
+        pygame.Rect(TILE_W*49, MAP_HEIGHT - TILE_H*5, TILE_W*8, TILE_H*2),
+        pygame.Rect(TILE_W*51, MAP_HEIGHT - TILE_H*7, TILE_W*4, TILE_H),
+        pygame.Rect(TILE_W*56, MAP_HEIGHT - TILE_H*7, TILE_W*4, TILE_H),
+        
+        pygame.Rect(TILE_W*73, MAP_HEIGHT - TILE_H*8, TILE_W*4, TILE_H),
+ 
+        pygame.Rect(TILE_W*61, MAP_HEIGHT - TILE_H*2, TILE_W*2, TILE_H),
+        pygame.Rect(TILE_W*58, MAP_HEIGHT - TILE_H*2, TILE_W*2, TILE_H), 
+        pygame.Rect(TILE_W*55, MAP_HEIGHT - TILE_H*2, TILE_W*2, TILE_H),
+        pygame.Rect(TILE_W*52, MAP_HEIGHT - TILE_H*2, TILE_W*2, TILE_H), 
+        pygame.Rect(TILE_W*49, MAP_HEIGHT - TILE_H*2, TILE_W*2, TILE_H),
+        pygame.Rect(TILE_W*46, MAP_HEIGHT - TILE_H*2, TILE_W*2, TILE_H),
+        pygame.Rect(TILE_W*43, MAP_HEIGHT - TILE_H*2, TILE_W*2, TILE_H),
+        pygame.Rect(TILE_W*40, MAP_HEIGHT - TILE_H*2, TILE_W*2, TILE_H),
+        pygame.Rect(TILE_W*37, MAP_HEIGHT - TILE_H*2, TILE_W*2, TILE_H),
+        pygame.Rect(TILE_W*34, MAP_HEIGHT - TILE_H*2, TILE_W*2, TILE_H),
+        pygame.Rect(TILE_W*31, MAP_HEIGHT - TILE_H*2, TILE_W*2, TILE_H),
+        pygame.Rect(TILE_W*28, MAP_HEIGHT - TILE_H*2, TILE_W*2, TILE_H),
+        pygame.Rect(TILE_W*25, MAP_HEIGHT - TILE_H*2, TILE_W*2, TILE_H),
+        
+        # Сплошные платформы влево от 2382 до 1435
+        pygame.Rect(TILE_W*23, MAP_HEIGHT - TILE_H*2, TILE_W*2, TILE_H),
+        pygame.Rect(TILE_W*21, MAP_HEIGHT - TILE_H*2, TILE_W*2, TILE_H),
+        pygame.Rect(TILE_W*19, MAP_HEIGHT - TILE_H*2, TILE_W*2, TILE_H),
+        pygame.Rect(TILE_W*17, MAP_HEIGHT - TILE_H*2, TILE_W*2, TILE_H),
+        pygame.Rect(TILE_W*15, MAP_HEIGHT - TILE_H*2, TILE_W*3, TILE_H),
+        
+        pygame.Rect(TILE_W*61, MAP_HEIGHT - TILE_H*8, TILE_W*5, TILE_H),
+        pygame.Rect(TILE_W*67, MAP_HEIGHT - TILE_H*7, TILE_W*4, TILE_H),
+        pygame.Rect(TILE_W*72, MAP_HEIGHT - TILE_H*6, TILE_W*4, TILE_H),
+        pygame.Rect(TILE_W*77, MAP_HEIGHT - TILE_H*5, TILE_W*5, TILE_H*2),
+        
+        pygame.Rect(TILE_W*83, MAP_HEIGHT - TILE_H*6, TILE_W*4, TILE_H),
+        pygame.Rect(TILE_W*88, MAP_HEIGHT - TILE_H*7, TILE_W*4, TILE_H),
+        pygame.Rect(TILE_W*93, MAP_HEIGHT - TILE_H*8, TILE_W*6, TILE_H*2),
+        
+        pygame.Rect(TILE_W*18, MAP_HEIGHT - TILE_H*6, TILE_W*2, TILE_H),
+        pygame.Rect(TILE_W*44, MAP_HEIGHT - TILE_H*8, TILE_W*2, TILE_H),
+        pygame.Rect(TILE_W*69, MAP_HEIGHT - TILE_H*10, TILE_W*2, TILE_H),
     ]
     
     enemies = [
-        (500, MAP_HEIGHT - 150), (800, MAP_HEIGHT - 210), (1100, MAP_HEIGHT - 270),
-        (1400, MAP_HEIGHT - 330), (1750, MAP_HEIGHT - 380), (2000, MAP_HEIGHT - 430),
-        
-        (2250, MAP_HEIGHT - 380), (2500, MAP_HEIGHT - 480), (2750, MAP_HEIGHT - 430),
-        (3000, MAP_HEIGHT - 530), (3350, MAP_HEIGHT - 580), (3550, MAP_HEIGHT - 630),
-        
-        (3750, MAP_HEIGHT - 580), (3950, MAP_HEIGHT - 680), (4150, MAP_HEIGHT - 630),
-        (4350, MAP_HEIGHT - 730), (4650, MAP_HEIGHT - 780), (5000, MAP_HEIGHT - 780),
-        
-        (1850, MAP_HEIGHT - 530), (2550, MAP_HEIGHT - 580), (3850, MAP_HEIGHT - 780),
-        (4450, MAP_HEIGHT - 830), (5050, MAP_HEIGHT - 880),
+        (TILE_W*17 + TILE_W*2, MAP_HEIGHT - TILE_H*3 - 30),
+        (TILE_W*27 + TILE_W*2, MAP_HEIGHT - TILE_H*4 - 30),
+        (TILE_W*32 + TILE_W*2, MAP_HEIGHT - TILE_H*4 - 30),
+        (TILE_W*38 + TILE_W*2, MAP_HEIGHT - TILE_H*5 - 30),
+        (TILE_W*50 + TILE_W*2, MAP_HEIGHT - TILE_H*5 - 30),
+        (TILE_W*54 + TILE_W*2, MAP_HEIGHT - TILE_H*5 - 30),
+        (TILE_W*52 + TILE_W*2, MAP_HEIGHT - TILE_H*7 - 30),
+        (TILE_W*58 + TILE_W*2, MAP_HEIGHT - TILE_H*7 - 30),
+        (TILE_W*68 + TILE_W*2, MAP_HEIGHT - TILE_H*7 - 30),
+        (TILE_W*73 + TILE_W*2, MAP_HEIGHT - TILE_H*6 - 30),
+        (TILE_W*84 + TILE_W*2, MAP_HEIGHT - TILE_H*6 - 30),
+        (TILE_W*89 + TILE_W*2, MAP_HEIGHT - TILE_H*7 - 30),
+        (TILE_W*95 + TILE_W*3, MAP_HEIGHT - TILE_H*8 - 30),
     ]
     
     items = [
-        (550, MAP_HEIGHT - 150), (850, MAP_HEIGHT - 210), (1150, MAP_HEIGHT - 270),
-        (1450, MAP_HEIGHT - 330), (1800, MAP_HEIGHT - 380), (2050, MAP_HEIGHT - 430),
-        (2300, MAP_HEIGHT - 380), (2550, MAP_HEIGHT - 480), (2800, MAP_HEIGHT - 430),
-        (3050, MAP_HEIGHT - 530), (3400, MAP_HEIGHT - 580), (3600, MAP_HEIGHT - 630),
-        (3800, MAP_HEIGHT - 580), (4000, MAP_HEIGHT - 680), (4200, MAP_HEIGHT - 630),
-        (4400, MAP_HEIGHT - 730), (4700, MAP_HEIGHT - 780), (5050, MAP_HEIGHT - 780),
-        (5400, MAP_HEIGHT - 830),
-
-        (1900, MAP_HEIGHT - 530), (2600, MAP_HEIGHT - 580), (3300, MAP_HEIGHT - 680),
-        (3900, MAP_HEIGHT - 780), (4500, MAP_HEIGHT - 830), (5100, MAP_HEIGHT - 880),
+        (TILE_W*5 + TILE_W, MAP_HEIGHT - TILE_H*2 - 60),
+        (TILE_W*17 + TILE_W*2, MAP_HEIGHT - TILE_H*3 - 60),
+        (TILE_W*27 + TILE_W*2, MAP_HEIGHT - TILE_H*4 - 60),
+        (TILE_W*38 + TILE_W*2, MAP_HEIGHT - TILE_H*5 - 60),
+        (TILE_W*50 + TILE_W, MAP_HEIGHT - TILE_H*5 - 60),
+        (TILE_W*52 + TILE_W, MAP_HEIGHT - TILE_H*7 - 60),
+        (TILE_W*57 + TILE_W, MAP_HEIGHT - TILE_H*7 - 60),
+        (TILE_W*68 + TILE_W*2, MAP_HEIGHT - TILE_H*7 - 60),
+        (TILE_W*78 + TILE_W*2, MAP_HEIGHT - TILE_H*5 - 60),
+        (TILE_W*89 + TILE_W*2, MAP_HEIGHT - TILE_H*7 - 60),
+        (TILE_W*18 + TILE_W, MAP_HEIGHT - TILE_H*6 - 60),
+        (TILE_W*44 + TILE_W, MAP_HEIGHT - TILE_H*8 - 60),
+        (TILE_W*69 + TILE_W, MAP_HEIGHT - TILE_H*10 - 60),
     ]
     
-    exit_pos = (5600, MAP_HEIGHT - 830)
+    exit_pos = (TILE_W*99 + TILE_W*3, MAP_HEIGHT - TILE_H*8 - 40)
     
     return {
         'platforms': platforms,

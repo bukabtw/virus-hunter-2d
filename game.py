@@ -1,6 +1,7 @@
 import pygame
 import sys
 import os
+import random
 from settings import *
 from settings import ASSETS_PATH
 from entities.player import Player
@@ -11,7 +12,6 @@ from levels.level_loader import LevelLoader
 from core.camera import Camera
 from core.game_state import GameState 
 from core.sound_manager import SoundManager
-from random import random
 
 class Game:
     def __init__(self):
@@ -81,12 +81,17 @@ class Game:
             return
         elif self.state == GameState.PLAYING:
             self._cleanup()
+        if self.boss:
+            arena_min_x = 30 * 128
+            arena_max_x = 54 * 128
+            arena_ground_y = 400 + 600
+            self.boss.set_arena_bounds(arena_min_x, arena_max_x, arena_ground_y)
 
     def _init_level(self):
         self.sound_manager.play_music(f"level_{self.level_num}")
         self.level_loader = LevelLoader()
         self.level_data = self.level_loader.get_level(self.level_num)
-        self.player = Player(100, SCREEN_HEIGHT - 150)
+        self.player = Player(100, SCREEN_HEIGHT - 3000)
         self.all_sprites = pygame.sprite.Group(self.player)
         self.enemies = pygame.sprite.Group()
         self.items = pygame.sprite.Group()
@@ -111,6 +116,11 @@ class Game:
             self.boss.spawn_enabled = (self.level_num == 3)
             self.enemies.add(self.boss)
             self.all_sprites.add(self.boss)
+            arena_min_x = 34 * 128
+            arena_max_x = 50 * 128
+            arena_ground_y = 400 + 600
+            self.boss.set_arena_bounds(arena_min_x, arena_max_x, arena_ground_y)
+            print(f"Босс создан на арене! Границы: {arena_min_x}-{arena_max_x}")
         self.platforms = self.level_data['platforms']
         self.last_time = pygame.time.get_ticks()
         for enemy in self.enemies:

@@ -12,10 +12,23 @@ class LevelLoader:
         for level_num in range(1, 4):
             level_module = __import__(f"levels.level_{level_num}", fromlist=["get_level"])
             level_data = level_module.get_level()
-            default_type = TILE_CONFIG[level_num]['default_type']
+            
+            level_config = TILE_CONFIG[level_num]
+            default_type = level_config['default_type']
+            tile_w, tile_h = level_config['tile_size']
+            
             platforms = []
             for p in level_data['platforms']:
-                platforms.append(Platform(p.x, p.y, p.width, p.height, platform_type=default_type))
+                width = ((p.width + tile_w - 1) // tile_w) * tile_w
+                height = ((p.height + tile_h - 1) // tile_h) * tile_h
+                
+                width = max(width, tile_w)
+                height = max(height, tile_h)
+                
+                platform = Platform(p.x, p.y, width, height, 
+                                  platform_type=default_type)
+                platforms.append(platform)
+            
             self.levels[level_num] = {
                 'platforms': platforms,
                 'items': level_data['items'],
