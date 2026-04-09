@@ -37,6 +37,7 @@ class Player(AnimatedEntity, Damageable):
             COLLIDE_H
         )
         
+        self.visual_rect = self.rect.copy()
         self.vel_x = 0
         self.vel_y = 0
         self.speed = 5

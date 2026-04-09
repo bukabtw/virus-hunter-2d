@@ -1,10 +1,11 @@
 import pygame
+import random
 from settings import *
 from core.animated_entity import AnimatedEntity
 from core.damageable import Damageable
 
 class Enemy(AnimatedEntity, Damageable):
-    def __init__(self, x, y, speed=1.5):
+    def __init__(self, x, y, speed=1.5, enemy_type='normal'):
         animations = {
             'idle': ENEMY_ANIMATIONS['idle'],
             'walk_right': ENEMY_ANIMATIONS['walk_right'],
@@ -12,56 +13,166 @@ class Enemy(AnimatedEntity, Damageable):
             'attack_left': ENEMY_ANIMATIONS['attack_left'],
             'attack_right': ENEMY_ANIMATIONS['attack_right'],
         }
-        
         sprite_path = f"{SPRITES_PATH}/{ENEMY_SPRITESHEET}"
         super().__init__(x, y, sprite_path, SPRITE_WIDTH, SPRITE_HEIGHT, SPRITE_SCALE, animations)
-        
         Damageable.__init__(self, max_health=10, invincible_duration=20)
         
-        self.speed = speed
-        self.direction = 1
+        self.enemy_type = enemy_type
+        if enemy_type == 'fast':
+            self.speed = speed * 1.5
+            self.max_health = 5
+            self.health = 5
+            self.attack_delay = 30
+        elif enemy_type == 'tank':
+            self.speed = speed * 0.6
+            self.max_health = 25
+            self.health = 25
+            self.attack_delay = 60
+        else:
+            self.speed = speed
+            self.attack_delay = 40
+        
+        COLLIDE_W = 80
+        COLLIDE_H = 85
+        OFFSET_X = 24
+        OFFSET_Y = 22
+        
+        self.collide_offset_x = OFFSET_X
+        self.collide_offset_y = OFFSET_Y
+        
+        self.visual_rect = self.rect.copy()
+        
+        self.collision_rect = pygame.Rect(
+            self.visual_rect.x + OFFSET_X,
+            self.visual_rect.y + OFFSET_Y,
+            COLLIDE_W,
+            COLLIDE_H
+        )
+        
+        self.direction = random.choice([-1, 1])
         self.attack_timer = 0
-        self.attack_delay = 40
         self.knockback_timer = 0
         self.knockback_direction = 0
+        self.patrol_timer = 0
+        self.patrol_direction = self.direction
+        self.jump_timer = 0
+        
+        self.vel_x = 0
+        self.vel_y = 0
+        self.gravity = 0.8
+        self.frozen = False
     
     def update(self, platforms, current_time, enemies, all_sprites, player):
         self.update_invincibility()
+        
+        if self.frozen:
+            self.rect = self.visual_rect
+            self.update_animation()
+            return
+        
+        self.collision_rect.x = self.visual_rect.x + self.collide_offset_x
+        self.collision_rect.y = self.visual_rect.y + self.collide_offset_y
+        
         if self.attack_timer > 0:
             self.attack_timer -= 1
         if self.knockback_timer > 0:
             self.knockback_timer -= 1
-            self.rect.x += self.knockback_direction * 5
+            self.visual_rect.x += self.knockback_direction * 5
+            self.collision_rect.x = self.visual_rect.x + self.collide_offset_x
+            self.rect = self.visual_rect
             return
         
+        self.vel_y += self.gravity
+        self.collision_rect.y += self.vel_y
+        
+        for p in platforms:
+            if self.collision_rect.colliderect(p.rect):
+                if self.vel_y > 0:
+                    self.collision_rect.bottom = p.rect.top
+                    self.vel_y = 0
+                    break
+                elif self.vel_y < 0:
+                    self.collision_rect.top = p.rect.bottom
+                    self.vel_y = 0
+                    break
+        
+        self.visual_rect.x = self.collision_rect.x - self.collide_offset_x
+        self.visual_rect.y = self.collision_rect.y - self.collide_offset_y
+        
         if player and player.alive():
-            if self.rect.x < player.rect.x:
-                self.direction = 1
-                self.facing_right = True
-            elif self.rect.x > player.rect.x:
-                self.direction = -1
-                self.facing_right = False
+            dx = player.visual_rect.centerx - self.visual_rect.centerx
             
-            self.rect.x += self.speed * self.direction
+            if abs(dx) < 300:
+                if dx > 0:
+                    self.direction = 1
+                    self.facing_right = True
+                elif dx < 0:
+                    self.direction = -1
+                    self.facing_right = False
+                self.collision_rect.x += self.speed * self.direction
+            else:
+                self.patrol_timer += 1
+                if self.patrol_timer > 120:
+                    self.patrol_direction *= -1
+                    self.patrol_timer = 0
+                self.direction = self.patrol_direction
+                self.facing_right = self.direction > 0
+                self.collision_rect.x += self.speed * self.direction
             
-            if self.rect.colliderect(player.rect) and self.attack_timer == 0:
+            for p in platforms:
+                if self.collision_rect.colliderect(p.rect):
+                    if self.collision_rect.x > p.rect.x:
+                        self.collision_rect.right = p.rect.left
+                    elif self.collision_rect.x < p.rect.x:
+                        self.collision_rect.left = p.rect.right
+                    break
+            
+            self.visual_rect.x = self.collision_rect.x - self.collide_offset_x
+            self.visual_rect.y = self.collision_rect.y - self.collide_offset_y
+            
+            if self.collision_rect.colliderect(player.collision_rect) and self.attack_timer == 0:
                 self.attack_timer = self.attack_delay
-                player.take_damage(1)
+                player.take_damage(2 if self.enemy_type == 'tank' else 1)
                 self.knockback_timer = 10
                 self.knockback_direction = -self.direction
         else:
-            self.rect.x += self.speed * self.direction
-            if self.rect.left <= 0 or self.rect.right >= MAP_WIDTH:
+            self.collision_rect.x += self.speed * self.direction
+            for p in platforms:
+                if self.collision_rect.colliderect(p.rect):
+                    if self.collision_rect.x > p.rect.x:
+                        self.collision_rect.right = p.rect.left
+                    elif self.collision_rect.x < p.rect.x:
+                        self.collision_rect.left = p.rect.right
+                    break
+            self.visual_rect.x = self.collision_rect.x - self.collide_offset_x
+            self.visual_rect.y = self.collision_rect.y - self.collide_offset_y
+            if self.visual_rect.left <= 0 or self.visual_rect.right >= MAP_WIDTH:
                 self.direction *= -1
                 self.facing_right = self.direction > 0
-
+        
+        if self.collision_rect.left < 0:
+            self.collision_rect.left = 0
+        if self.collision_rect.right > MAP_WIDTH:
+            self.collision_rect.right = MAP_WIDTH
+        if self.collision_rect.top < 0:
+            self.collision_rect.top = 0
+        if self.collision_rect.bottom > MAP_HEIGHT:
+            self.collision_rect.bottom = MAP_HEIGHT
+            self.vel_y = 0
+        
+        self.visual_rect.x = self.collision_rect.x - self.collide_offset_x
+        self.visual_rect.y = self.collision_rect.y - self.collide_offset_y
+        self.rect = self.visual_rect
+        self.collision_rect.x = self.visual_rect.x + self.collide_offset_x
+        self.collision_rect.y = self.visual_rect.y + self.collide_offset_y
+        
         if self.attack_timer > 0:
             self.state = 'attack_left' if not self.facing_right else 'attack_right'
         else:
             self.state = 'walk_right' if self.direction > 0 else 'walk_left'
         
         self.update_animation()
-    
+
     def take_damage(self, amount):
         if super().take_damage(amount):
             self.knockback_timer = 8
