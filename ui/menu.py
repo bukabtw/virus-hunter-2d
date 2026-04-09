@@ -88,12 +88,12 @@ class Menu:
 
     def _create_buttons(self):
         button_positions = [
-            (920, 380),
-            (920, 450),
-            (920, 520),
+            (920, 400),
+            (920, 445),
+            (920, 490),
         ]
         
-        button_width = 200
+        button_width = 400
         button_height = 50
         
         self.buttons = []
@@ -126,8 +126,8 @@ class Menu:
         title_pos = (920, 310)
         slider_music_pos = (920, 400)
         slider_sfx_pos = (920, 460)
-        difficulty_pos = (920, 490)
-        back_pos = (920, 550)
+        difficulty_pos = (920, 495)
+        back_pos = (920, 540)
         
         title_x = int(title_pos[0] * SCREEN_WIDTH / BG_W)
         title_y = int(title_pos[1] * SCREEN_HEIGHT / BG_H)
@@ -211,7 +211,6 @@ class Menu:
             clock.tick(60)
 
     def start(self):
-        self.game.sound_manager.stop_music()
         self.game.difficulty = self.difficulty
         self.running = False
 

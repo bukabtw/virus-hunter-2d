@@ -20,7 +20,7 @@ class Player(AnimatedEntity, Damageable):
         sprite_path = f"{SPRITES_PATH}/{PLAYER_SPRITESHEET}"
         super().__init__(x, y, sprite_path, SPRITE_WIDTH, SPRITE_HEIGHT, SPRITE_SCALE, animations)
         
-        Damageable.__init__(self, max_health=500, invincible_duration=60)
+        Damageable.__init__(self, max_health=5, invincible_duration=60)
         
         COLLIDE_W = 50
         COLLIDE_H = 95
@@ -112,15 +112,17 @@ class Player(AnimatedEntity, Damageable):
         
         self.rect.x = self.collision_rect.x - self.collide_offset_x
         self.rect.y = self.collision_rect.y - self.collide_offset_y
+
+        if self.is_attacking:
+            if pygame.time.get_ticks() - self.attack_timer > self.attack_duration:
+                self.is_attacking = False
         
         if self.is_attacking:
             self.state = 'attack_right' if self.facing_right else 'attack_left'
-            if pygame.time.get_ticks() - self.attack_timer > self.attack_duration:
-                self.is_attacking = False
+        elif not self.on_ground: 
+            self.state = 'jump_right' if self.facing_right else 'jump_left'
         elif abs(self.vel_x) > 0.5:
             self.state = 'walk_right' if self.facing_right else 'walk_left'
-        elif not self.on_ground:
-            self.state = 'jump_right' if self.facing_right else 'jump_left'
         else:
             self.state = 'idle_right' if self.facing_right else 'idle_left'
 

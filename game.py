@@ -29,9 +29,11 @@ class Game:
         self.debug_mode = True
         self._load_all_sounds()
         self._load_level_music()
+        self.phone_flying = False
+        self.phone_flying = False
+        self.phone_sound_channel = None
     
     def _load_all_sounds(self):
-        self.sound_manager.load_sound('player_attack', SOUND_PLAYER_ATTACK)
         self.sound_manager.load_sound('player_jump', SOUND_PLAYER_JUMP)
         self.sound_manager.load_sound('player_hit', SOUND_PLAYER_HIT)
         self.sound_manager.load_sound('enemy_attack', SOUND_ENEMY_ATTACK)
@@ -45,7 +47,8 @@ class Game:
         self.sound_manager.load_sound('victory', SOUND_VICTORY)
         self.sound_manager.load_sound('game_over', SOUND_GAME_OVER)
         self.sound_manager.load_sound('level_up', SOUND_LEVEL_UP)
-        self.sound_manager.load_music('menu', SOUND_MENU)
+        self.sound_manager.load_music('menu_soundtrack', os.path.join(SOUNDS_PATH, 'menu_soundtrack.wav'))
+        self.sound_manager.load_sound('player_attack', os.path.join(SOUNDS_PATH, 'player_attack.wav'))
 
     def _load_level_music(self):
         for i in range(1, 4):
@@ -63,6 +66,7 @@ class Game:
             bg = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
             bg.fill(COLORS['DARK_GREEN'])
             return bg
+            
 
     def start_level(self, level_num=1, difficulty=1):
         self.level_num = level_num
@@ -88,7 +92,6 @@ class Game:
             self.boss.set_arena_bounds(arena_min_x, arena_max_x, arena_ground_y)
 
     def _init_level(self):
-        self.sound_manager.play_music(f"level_{self.level_num}")
         self.level_loader = LevelLoader()
         self.level_data = self.level_loader.get_level(self.level_num)
         self.player = Player(100, SCREEN_HEIGHT - 3000)
@@ -158,6 +161,10 @@ class Game:
                 if proj:
                     self.projectiles.add(proj)
                     self.all_sprites.add(proj)
+                    
+                    if not self.phone_flying:
+                        self.phone_flying = True
+                        self.sound_manager.play_looped('player_attack')
 
     def _update(self, dt):
         if self.state != GameState.PLAYING:
@@ -170,6 +177,10 @@ class Game:
         self._check_item_collection()
         self._check_player_damage()
         self._check_level_transition(current_time)
+
+        if self.phone_flying and len(self.projectiles) == 0:
+            self.phone_flying = False
+            self.sound_manager.stop_looped('player_attack')
 
     def _check_projectile_hits(self):
         for proj in self.projectiles:
@@ -230,17 +241,23 @@ class Game:
         self.camera.update(self.player)
         self.player.camera_x = self.camera.camera.x
         self.player.camera_y = self.camera.camera.y
+        
         if self.background:
             if self.background.get_size() != (SCREEN_WIDTH, SCREEN_HEIGHT):
                 self.background = pygame.transform.scale(self.background, (SCREEN_WIDTH, SCREEN_HEIGHT))
-            self.screen.blit(self.background, (0, 0))
+            
+            bg_x = (self.camera.camera.x // 2) % SCREEN_WIDTH
+            self.screen.blit(self.background, (bg_x, 0))
+            self.screen.blit(self.background, (bg_x - SCREEN_WIDTH, 0))
         else:
             self.screen.fill(COLORS['DARK_GREEN'])
+        
         for p in self.platforms:
             if hasattr(p, 'image') and p.image:
                 self.screen.blit(p.image, self.camera.apply(p))
             else:
                 pygame.draw.rect(self.screen, COLORS['GREEN'], self.camera.apply_rect(p))
+
         for sprite in self.all_sprites:
             flash_color = None
             if hasattr(sprite, 'get_damage_color'):
@@ -257,7 +274,18 @@ class Game:
         
         if self.level_data.get('exit'):
             exit_rect = pygame.Rect(*self.level_data['exit'], 50, 50)
-            pygame.draw.rect(self.screen, COLORS['YELLOW'], self.camera.apply_rect(exit_rect))
+            if not hasattr(self, 'exit_sprite'):
+                try:
+                    self.exit_sprite = pygame.image.load(os.path.join(SPRITES_PATH, 'exit.png')).convert_alpha()
+                    self.exit_sprite = pygame.transform.scale(self.exit_sprite, (64, 64))
+                except:
+                    self.exit_sprite = None
+            if self.exit_sprite:
+                sprite_rect = self.exit_sprite.get_rect(center=exit_rect.center)
+                self.screen.blit(self.exit_sprite, self.camera.apply_rect(sprite_rect))
+            else:
+                pygame.draw.rect(self.screen, COLORS['YELLOW'], self.camera.apply_rect(exit_rect))
+        
         self._draw_hud()
         pygame.display.flip()
 
@@ -340,11 +368,13 @@ class Game:
         clock = pygame.time.Clock()
         
         while paused and self.state == GameState.PAUSED:
-
             if self.background:
                 if self.background.get_size() != (SCREEN_WIDTH, SCREEN_HEIGHT):
                     self.background = pygame.transform.scale(self.background, (SCREEN_WIDTH, SCREEN_HEIGHT))
-                self.screen.blit(self.background, (0, 0))
+                
+                bg_x = (self.camera.camera.x // 2) % SCREEN_WIDTH
+                self.screen.blit(self.background, (bg_x, 0))
+                self.screen.blit(self.background, (bg_x - SCREEN_WIDTH, 0))
             else:
                 self.screen.fill(COLORS['DARK_GREEN'])
             
@@ -445,7 +475,10 @@ class Game:
             if self.background:
                 if self.background.get_size() != (SCREEN_WIDTH, SCREEN_HEIGHT):
                     self.background = pygame.transform.scale(self.background, (SCREEN_WIDTH, SCREEN_HEIGHT))
-                self.screen.blit(self.background, (0, 0))
+                
+                bg_x = (self.camera.camera.x // 2) % SCREEN_WIDTH
+                self.screen.blit(self.background, (bg_x, 0))
+                self.screen.blit(self.background, (bg_x - SCREEN_WIDTH, 0))
             else:
                 self.screen.fill(COLORS['DARK_GREEN'])
             
@@ -528,8 +561,8 @@ class Game:
                 pygame.draw.circle(self.screen, COLORS['YELLOW'], (x, y), 2)
             title = self.font.render("ПОБЕДА!", True, COLORS['GREEN'])
             subtitle = self.font.render("Вы спасли мир от вирусов!", True, COLORS['WHITE'])
-            restart_text = self.font.render("R - Играть заново", True, COLORS['GREEN'])
-            menu_text = self.font.render("M - Выйти в меню", True, COLORS['YELLOW'])
+            restart_text = self.font.render("R - Играть заново", True, COLORS['PURPLE'])
+            menu_text = self.font.render("M - Выйти в меню", True, COLORS['PUPRLE'])
             self.screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, SCREEN_HEIGHT//2 - 100))
             self.screen.blit(subtitle, (SCREEN_WIDTH//2 - subtitle.get_width()//2, SCREEN_HEIGHT//2 - 40))
             self.screen.blit(restart_text, (SCREEN_WIDTH//2 - restart_text.get_width()//2, SCREEN_HEIGHT//2 + 20))
@@ -555,8 +588,8 @@ class Game:
             self.screen.fill(COLORS['BLACK'])
             title = self.font.render("GAME OVER", True, COLORS['RED'])
             subtitle = self.font.render("Вы проиграли...", True, COLORS['WHITE'])
-            restart_text = self.font.render("R - Начать заново", True, COLORS['GREEN'])
-            menu_text = self.font.render("M - Выйти в меню", True, COLORS['YELLOW'])
+            restart_text = self.font.render("R - Начать заново", True, COLORS['PURPLE'])
+            menu_text = self.font.render("M - Выйти в меню", True, COLORS['PURPLE'])
             self.screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, SCREEN_HEIGHT//2 - 100))
             self.screen.blit(subtitle, (SCREEN_WIDTH//2 - subtitle.get_width()//2, SCREEN_HEIGHT//2 - 40))
             self.screen.blit(restart_text, (SCREEN_WIDTH//2 - restart_text.get_width()//2, SCREEN_HEIGHT//2 + 20))
@@ -576,6 +609,9 @@ class Game:
     
     def run(self):
         from ui.menu import Menu
+        
+        self.sound_manager.play_music('menu_soundtrack')
+
         while True:
             print(f"Текущее состояние: {self.state}")
             

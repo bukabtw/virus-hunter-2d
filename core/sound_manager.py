@@ -8,6 +8,7 @@ class SoundManager:
         self.sfx_volume = SFX_VOLUME
         self.music_volume = MUSIC_VOLUME
         self.current_music = None
+        self.looped_sounds = {}
     
     def load_sound(self, name, path):
         try:
@@ -35,6 +36,18 @@ class SoundManager:
         pygame.mixer.music.stop()
         self.current_music = None
     
+    def play_looped(self, name, fade_ms=0):
+        if name in self.sounds:
+            if name in self.looped_sounds and self.looped_sounds[name]:
+                return
+            channel = self.sounds[name].play(loops=-1, fade_ms=fade_ms)
+            self.looped_sounds[name] = channel
+    
+    def stop_looped(self, name, fade_ms=0):
+        if name in self.looped_sounds and self.looped_sounds[name]:
+            self.looped_sounds[name].fadeout(fade_ms)
+            self.looped_sounds[name] = None
+
     def play(self, name):
         if name in self.sounds:
             self.sounds[name].play()

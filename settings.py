@@ -59,8 +59,8 @@ ITEM_ANIMATIONS = {'idle': (0, 5)}
 PLAYER_ANIMATIONS = {
     'idle_right': (25, 2),
     'idle_left': (23, 2),
-    'walk_right': (11, 10),
-    'walk_left': (9, 10),
+    'walk_right': (11, 9),
+    'walk_left': (9, 9),
     'jump_right': (29, 5),
     'jump_left': (27, 5),
     'attack_right': (15, 6),
